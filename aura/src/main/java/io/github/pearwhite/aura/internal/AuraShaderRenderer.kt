@@ -10,7 +10,7 @@ import io.github.pearwhite.aura.AuraDefaults
 import io.github.pearwhite.aura.AuraStyle
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-internal class AuraShaderRender {
+internal class AuraShaderRenderer {
     private val shader = RuntimeShader(AURA_SHADER_SRC)
     private val brush = ShaderBrush(shader)
     private val colorBuffer = FloatArray(AuraDefaults.MaxColors * 4)

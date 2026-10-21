@@ -6,7 +6,7 @@ import androidx.compose.runtime.Immutable
 public data class AuraStyle(
     val coreRadius: Float = 0.55f,     // радиус плотного ядра
     val edgeSoftness: Float = 0.1f,    // размытость границы (> 0)
-    val glowIntensity: Float = 0.7f,   // сила свечения вокруг
+    val glowIntensity: Float = 0.4f,   // сила свечения вокруг
     val glowSpread: Float = 5f,        // больше значение → уже свечение
     val warpStrength: Float = 0.4f,    // «жидкость»: сила искажения
     val patternScale: Float = 6f,      // масштаб цветовых пятен
