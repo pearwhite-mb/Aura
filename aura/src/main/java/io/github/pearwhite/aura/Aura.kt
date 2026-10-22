@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -20,13 +22,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import io.github.pearwhite.aura.internal.AuraShaderRenderer
+import io.github.pearwhite.aura.internal.PaletteFrame
 import kotlin.math.PI
 
 private const val TIME_PERIOD = (20 * PI).toFloat()
 
 @Composable
 public fun Aura(
-    colors: List<Color>,
+    palette: AuraPalette,
     modifier: Modifier = Modifier,
     style: AuraStyle = AuraDefaults.Style,
     animation: AuraAnimation = AuraDefaults.Animation,
@@ -34,100 +37,96 @@ public fun Aura(
     colorTransition: AnimationSpec<Float>? = AuraDefaults.ColorTransition,
     fallback: (@Composable BoxScope.() -> Unit)? = null,
 ) {
-    if (colors.isEmpty()) return
-
-    /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val time = rememberAuraTime(animation)
-        Spacer(
-            modifier = modifier.drawWithCache {
-                val renderer = AuraShaderRender()
-                onDrawBehind {
-                    renderer.draw(this, colors, style, seed, time.floatValue)
-                }
-            }
-        )
-    } else if (fallback != null) {
-        Box(modifier, content = fallback)
-    } else {
-        Spacer(modifier = modifier.background(Brush.radialGradient(colors + Color.Transparent)))
-    }*/
+    if (palette.isEmpty) return
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        AuraShader(colors, modifier, style, animation, seed, colorTransition)
+        AuraShader(palette, modifier, style, animation, seed, colorTransition)
     } else if (fallback != null) {
         Box(modifier, content = fallback)
     } else {
-        Spacer(modifier.background(Brush.radialGradient(colors + Color.Transparent)))
+        Spacer(modifier.background(palette.toFallbackBrush()))
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 private fun AuraShader(
-    colors: List<Color>,
-    modifier: Modifier,
-    style: AuraStyle,
-    animation: AuraAnimation,
-    seed: Float,
-    colorTransition: AnimationSpec<Float>?,
+    palette: AuraPalette, modifier: Modifier, style: AuraStyle,
+    animation: AuraAnimation, seed: Float, colorTransition: AnimationSpec<Float>?,
 ) {
     val renderer = remember { AuraShaderRenderer() }
     val time = rememberAuraTime(animation)
-    val palette = rememberAnimatedPalette(colors, colorTransition)
+    val frame = rememberPaletteFrame(palette, colorTransition)
+    Spacer(modifier.drawBehind { renderer.draw(this, frame(), style, seed, time.floatValue) })
+}
 
-    Spacer(
-        modifier.drawBehind {
-            renderer.draw(this, palette(), style, seed, time.floatValue)
+private fun AuraPalette.toFallbackBrush(): Brush {
+    var acc = 0f
+    val stops = buildList {
+        for (i in colors.indices) {
+            add((acc + weights[i] / 2f) * 0.8f to colors[i])
+            acc += weights[i]
         }
-    )
-}
-
-private class PaletteTransition(initial: List<Color>) {
-    var from: List<Color> = initial
-    var to: List<Color> = initial
-
-    fun at(fraction: Float): List<Color> {
-        if (fraction >= 1f || from === to) return to
-        val n = maxOf(from.size, to.size)
-        val a = from.resampled(n)
-        val b = to.resampled(n)
-        return List(n) { lerp(a[it], b[it], fraction) }
+        add(1f to Color.Transparent)
     }
+    return Brush.radialGradient(colorStops = stops.toTypedArray())
 }
-
-private fun List<Color>.resampled(n: Int): List<Color> {
-    if (size == n) return this
-    if (size == 1) return List(n) { this[0] }
-    return List(n) { i ->
-        val x = i.toFloat() / (n - 1) * (size - 1)
-        val lo = x.toInt().coerceAtMost(size - 2)
-        lerp(this[lo], this[lo + 1], x - lo)
-    }
-}
-
 
 @Composable
-private fun rememberAnimatedPalette(
-    target: List<Color>,
+private fun rememberPaletteFrame(
+    target: AuraPalette,
     spec: AnimationSpec<Float>?,
-): () -> List<Color> {
+): () -> PaletteFrame {
+    val frame = remember { PaletteFrame() }
     val transition = remember { PaletteTransition(target) }
     val progress = remember { Animatable(1f) }
+    val currentSpec by rememberUpdatedState(spec)
 
-    LaunchedEffect(target, spec) {
+    LaunchedEffect(target) {
         if (target == transition.to) return@LaunchedEffect
-        if (spec == null) {
-            transition.from = target
-            transition.to = target
+        transition.from = blend(transition.from, transition.to, progress.value)
+        transition.to = target
+        val s = currentSpec
+        if (s == null) {
             progress.snapTo(1f)
         } else {
-            transition.from = transition.at(progress.value)
-            transition.to = target
             progress.snapTo(0f)
-            progress.animateTo(1f, spec)
+            progress.animateTo(1f, s)
         }
     }
-    return { transition.at(progress.value) }
+    return {
+        blendInto(transition.from, transition.to, progress.value, frame)
+        frame
+    }
+}
+
+private fun mixColor(a: Color, b: Color, f: Float): Color = when {
+    f <= 0f -> a
+    f >= 1f -> b
+    else -> lerp(a, b, f)
+}
+
+internal fun blendInto(a: AuraPalette, b: AuraPalette, f: Float, out: PaletteFrame) {
+    val n = maxOf(a.size, b.size)
+    var cumulative = 0f
+    for (i in 0 until n) {
+        val c = mixColor(a.colorAt(i), b.colorAt(i), f)
+        out.colors[i * 4] = c.red
+        out.colors[i * 4 + 1] = c.green
+        out.colors[i * 4 + 2] = c.blue
+        out.colors[i * 4 + 3] = c.alpha
+        cumulative += a.weightAt(i) + (b.weightAt(i) - a.weightAt(i)) * f
+        out.bounds[i] = cumulative
+    }
+    out.count = n
+}
+
+internal fun blend(a: AuraPalette, b: AuraPalette, f: Float): AuraPalette {
+    val n = maxOf(a.size, b.size)
+    return AuraPalette(
+        List(n) { mixColor(a.colorAt(it), b.colorAt(it), f) },
+        List(n) { a.weightAt(it) + (b.weightAt(it) - a.weightAt(it)) * f },
+    )
 }
 
 @Composable
@@ -146,4 +145,12 @@ private fun rememberAuraTime(animation: AuraAnimation): FloatState {
         }
     }
     return time
+}
+
+private fun AuraPalette.colorAt(i: Int): Color = colors[minOf(i, size - 1)]
+private fun AuraPalette.weightAt(i: Int): Float = if (i < size) weights[i] else 0f
+
+private class PaletteTransition(initial: AuraPalette) {
+    var from = initial
+    var to = initial
 }

@@ -11,4 +11,5 @@ public data class AuraStyle(
     val warpStrength: Float = 0.4f,    // «жидкость»: сила искажения
     val patternScale: Float = 6f,      // масштаб цветовых пятен
     val shapeExponent: Float = 2f,     // 2 = круг, 4+ = сквиркл, 1 = ромб
+    val colorBlend: Float = 0.2f,      // полуширина перехода между цветами, 0..0.5
 )
