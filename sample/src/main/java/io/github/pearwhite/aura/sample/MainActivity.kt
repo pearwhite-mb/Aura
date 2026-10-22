@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AuraTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AuraGeneratorScreen(
+                    AuraPlayground(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
+/*@Composable
 fun AuraGeneratorScreen(modifier: Modifier = Modifier) {
     var entries by remember { mutableStateOf(preset(0.5f, 0.3f, 0.2f)) }
     var colorBlend by remember { mutableFloatStateOf(AuraDefaults.Style.colorBlend) }
@@ -172,4 +172,4 @@ private val RgbColors = listOf(Color(0xFFE53935), Color(0xFF43A047), Color(0xFF1
 
 private fun preset(vararg weights: Float) = weights.mapIndexed { i, w -> AuraEntry(RgbColors[i], w) }
 
-private fun randomColor() = AuraDefaults.vibrantPalette(1).first()
+private fun randomColor() = AuraDefaults.vibrantPalette(1).first()*/
