@@ -31,4 +31,5 @@ dependencies {
     api(libs.androidx.compose.runtime)
     api(libs.androidx.compose.animation.core)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 }

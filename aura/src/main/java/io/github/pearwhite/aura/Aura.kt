@@ -1,6 +1,7 @@
 package io.github.pearwhite.aura
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
@@ -17,14 +18,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.lerp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import io.github.pearwhite.aura.internal.AuraShaderRenderer
 import io.github.pearwhite.aura.internal.PaletteFrame
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlin.math.PI
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val TIME_PERIOD = (20 * PI).toFloat()
 
@@ -59,7 +67,16 @@ private fun AuraShader(
     val renderer = remember { AuraShaderRenderer() }
     val time = rememberAuraTime(animation)
     val frame = rememberPaletteFrame(palette, colorTransition)
-    Spacer(modifier.drawBehind { renderer.draw(this, frame(), style, shape, seed, time.floatValue) })
+    Spacer(modifier.drawBehind {
+        renderer.draw(
+            this,
+            frame(),
+            style,
+            shape,
+            seed,
+            time.floatValue
+        )
+    })
 }
 
 private fun AuraPalette.toFallbackBrush(filled: Boolean): Brush {
@@ -136,10 +153,19 @@ internal fun blend(a: AuraPalette, b: AuraPalette, f: Float): AuraPalette {
 @Composable
 private fun rememberAuraTime(animation: AuraAnimation): FloatState {
     val time = remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(animation) {
-        if (animation is AuraAnimation.Flow) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+
+    LaunchedEffect(animation, lifecycle) {
+        if (animation !is AuraAnimation.Flow) return@LaunchedEffect
+
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             var last = withFrameNanos { it }
             while (true) {
+                if (currentCoroutineContext()[MotionDurationScale]?.scaleFactor == 0f) {
+                    delay(500.milliseconds)
+                    last = withFrameNanos { it }
+                    continue
+                }
                 withFrameNanos { now ->
                     val dt = (now - last) / 1_000_000_000f
                     last = now
