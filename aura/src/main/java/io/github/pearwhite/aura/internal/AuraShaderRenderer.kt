@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import io.github.pearwhite.aura.AuraDefaults
+import io.github.pearwhite.aura.AuraPatternFit
 import io.github.pearwhite.aura.AuraShape
 import io.github.pearwhite.aura.AuraStyle
 
@@ -56,6 +57,17 @@ internal class AuraShaderRenderer {
                 shader.setFloatUniform("shapeParam", shape.cornerRadius.coerceAtLeast(0f))
             }
         }
+        val fit = when (style.patternFit) {
+            AuraPatternFit.Auto ->
+                if (shape is AuraShape.Blob) AuraPatternFit.ShorterSide else AuraPatternFit.Stretch
+            else -> style.patternFit
+        }
+        val w = scope.size.width.coerceAtLeast(1f)
+        val h = scope.size.height.coerceAtLeast(1f)
+        val side = if (fit == AuraPatternFit.LongerSide) maxOf(w, h) else minOf(w, h)
+        val halfX = if (fit == AuraPatternFit.Stretch) w / 2f else side / 2f
+        val halfY = if (fit == AuraPatternFit.Stretch) h / 2f else side / 2f
+        shader.setFloatUniform("patternHalf", halfX, halfY)
 
         scope.drawRect(brush)
     }

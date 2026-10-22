@@ -16,6 +16,7 @@ uniform float  warpStrength;
 uniform float  patternScale;
 uniform int   shapeMode;   
 uniform float shapeParam;  
+uniform float2 patternHalf;
 
 half4 samplePalette(float t) {
     half4 result = half4(0.0);
@@ -55,9 +56,10 @@ half4 main(float2 fragCoord) {
     float2 p = (fragCoord - 0.5 * resolution) / (0.5 * min(resolution.x, resolution.y));
     float alpha = coverage(p);
 
-    float2 w = p;
-    w.x += sin(p.y * 2.5 + time * 0.3 + seed) * warpStrength;
-    w.y += cos(p.x * 2.5 - time * 0.4 - seed) * warpStrength;
+    float2 q = (fragCoord - 0.5 * resolution) / patternHalf;
+    float2 w = q;
+    w.x += sin(q.y * 2.5 + time * 0.3 + seed) * warpStrength;
+    w.y += cos(q.x * 2.5 - time * 0.4 - seed) * warpStrength;
 
     float u = 0.5
         + 0.25 * sin(w.x * patternScale + time * 0.5)

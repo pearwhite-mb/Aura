@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -40,6 +41,7 @@ import io.github.pearwhite.aura.Aura
 import io.github.pearwhite.aura.AuraAnimation
 import io.github.pearwhite.aura.AuraDefaults
 import io.github.pearwhite.aura.AuraPalette
+import io.github.pearwhite.aura.AuraPatternFit
 import io.github.pearwhite.aura.AuraShape
 import io.github.pearwhite.aura.AuraStyle
 import java.util.Locale
@@ -52,8 +54,7 @@ private enum class ShapeKind(val title: String) {
 }
 
 private enum class AreaKind(val title: String) {
-    Square("1:1"),
-    Wide("Широкая")
+    Square("1:1"), Wide("Широкая"), Tall("Высокая")
 }
 
 private data class AuraEntry(val color: Color, val weight: Float)
@@ -83,11 +84,11 @@ private val StyleParams = listOf(
 
 private fun fmt(v: Float): String = "%.2f".format(Locale.ROOT, v)
 
-private fun AuraStyle.toCode(): String =
-    StyleParams.joinToString(separator = ",\n", prefix = "AuraStyle(\n", postfix = "\n)") {
-        "    ${it.name} = ${fmt(it.get(this))}f"
-    }
-
+private fun AuraStyle.toCode(): String {
+    val lines = StyleParams.map { "    ${it.name} = ${fmt(it.get(this))}f" } +
+            "    patternFit = AuraPatternFit.$patternFit"
+    return lines.joinToString(separator = ",\n", prefix = "AuraStyle(\n", postfix = "\n)")
+}
 @Composable
 fun AuraPlayground(modifier: Modifier = Modifier) {
     var style by remember { mutableStateOf(AuraDefaults.Style) }
@@ -124,6 +125,7 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
                 modifier = when (area) {
                     AreaKind.Square -> Modifier.size(260.dp)
                     AreaKind.Wide -> Modifier.fillMaxSize()
+                    AreaKind.Tall -> Modifier.width(140.dp).height(260.dp)
                 },
             )
         }
@@ -163,6 +165,10 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
 
             SectionTitle("Анимация")
             ParamSlider("Скорость (0 = без анимации)", speed, 0f..3f) { speed = it }
+
+            ChipRow(AuraPatternFit.entries, style.patternFit, { it.name }) {
+                style = style.copy(patternFit = it)
+            }
 
             SectionTitle("Палитра (веса)")
             entries.forEachIndexed { i, e ->
