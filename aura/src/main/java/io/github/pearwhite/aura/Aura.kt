@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.lerp
 import io.github.pearwhite.aura.internal.AuraShaderRenderer
 import io.github.pearwhite.aura.internal.PaletteFrame
@@ -32,6 +33,7 @@ public fun Aura(
     palette: AuraPalette,
     modifier: Modifier = Modifier,
     style: AuraStyle = AuraDefaults.Style,
+    shape: AuraShape = AuraDefaults.Shape,
     animation: AuraAnimation = AuraDefaults.Animation,
     seed: Float = 0f,
     colorTransition: AnimationSpec<Float>? = AuraDefaults.ColorTransition,
@@ -40,36 +42,38 @@ public fun Aura(
     if (palette.isEmpty) return
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        AuraShader(palette, modifier, style, animation, seed, colorTransition)
+        AuraShader(palette, modifier, style, shape, animation, seed, colorTransition)
     } else if (fallback != null) {
         Box(modifier, content = fallback)
     } else {
-        Spacer(modifier.background(palette.toFallbackBrush()))
+        Spacer(modifier.background(palette.toFallbackBrush(filled = shape !is AuraShape.Blob)))
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 private fun AuraShader(
-    palette: AuraPalette, modifier: Modifier, style: AuraStyle,
+    palette: AuraPalette, modifier: Modifier, style: AuraStyle, shape: AuraShape,
     animation: AuraAnimation, seed: Float, colorTransition: AnimationSpec<Float>?,
 ) {
     val renderer = remember { AuraShaderRenderer() }
     val time = rememberAuraTime(animation)
     val frame = rememberPaletteFrame(palette, colorTransition)
-    Spacer(modifier.drawBehind { renderer.draw(this, frame(), style, seed, time.floatValue) })
+    Spacer(modifier.drawBehind { renderer.draw(this, frame(), style, shape, seed, time.floatValue) })
 }
 
-private fun AuraPalette.toFallbackBrush(): Brush {
+private fun AuraPalette.toFallbackBrush(filled: Boolean): Brush {
+    if (filled && colors.size == 1) return SolidColor(colors[0])
     var acc = 0f
     val stops = buildList {
         for (i in colors.indices) {
-            add((acc + weights[i] / 2f) * 0.8f to colors[i])
+            add((acc + weights[i] / 2f) * (if (filled) 1f else 0.8f) to colors[i])
             acc += weights[i]
         }
-        add(1f to Color.Transparent)
-    }
-    return Brush.radialGradient(colorStops = stops.toTypedArray())
+        if (!filled) add(1f to Color.Transparent)
+    }.toTypedArray()
+    return if (filled) Brush.linearGradient(colorStops = stops)
+    else Brush.radialGradient(colorStops = stops)
 }
 
 @Composable

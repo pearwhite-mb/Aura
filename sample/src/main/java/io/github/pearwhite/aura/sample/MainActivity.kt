@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import io.github.pearwhite.aura.Aura
 import io.github.pearwhite.aura.AuraDefaults
 import io.github.pearwhite.aura.AuraPalette
+import io.github.pearwhite.aura.AuraShape
 import io.github.pearwhite.aura.sample.ui.theme.AuraTheme
 import kotlin.math.roundToInt
 
@@ -67,23 +68,30 @@ fun AuraGeneratorScreen(modifier: Modifier = Modifier) {
     val palette = remember(entries) {
         AuraPalette.weighted(entries.map { it.color to it.weight })
     }
-    val style = remember(colorBlend) { AuraDefaults.Style.copy(colorBlend = colorBlend) }
+    var shape by remember { mutableStateOf<AuraShape>(AuraShape.Blob()) }
 
     // Доли, как их видит библиотека (если все веса нулевые, доли равные)
     val total = entries.sumOf { it.weight.toDouble() }.toFloat()
     val shares = if (total > 0f) entries.map { it.weight / total }
     else entries.map { 1f / entries.size }
 
+    var glow by remember { mutableFloatStateOf(AuraDefaults.Style.glowIntensity) }
+    var spread by remember { mutableFloatStateOf(AuraDefaults.Style.glowSpread) }
+    val style = remember(colorBlend, glow, spread) {
+        AuraDefaults.Style.copy(colorBlend = colorBlend, glowIntensity = glow, glowSpread = spread)
+    }
+
     Column(
         modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(23.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Aura(
             palette = palette,
             style = style,
+            shape = shape,
             colorTransition = tween(200),   // короткий переход, чтобы слайдер не «лагал»
             modifier = Modifier.size(300.dp),
         )
@@ -128,6 +136,11 @@ fun AuraGeneratorScreen(modifier: Modifier = Modifier) {
             valueRange = 0.01f..0.4f,
         )
 
+        Text("Свечение: ${"%.2f".format(glow)}")
+        Slider(value = glow, onValueChange = { glow = it }, valueRange = 0f..0.6f)
+        Text("Затухание: ${"%.1f".format(spread)}")
+        Slider(value = spread, onValueChange = { spread = it }, valueRange = 1f..8f)
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { entries = preset(0.7f, 0.3f) }) { Text("70/30") }
             Button(onClick = { entries = preset(0.5f, 0.3f, 0.2f) }) { Text("50/30/20") }
@@ -145,6 +158,11 @@ fun AuraGeneratorScreen(modifier: Modifier = Modifier) {
             Button(onClick = { entries = entries.map { it.copy(color = randomColor()) } }) {
                 Text("Новые цвета")
             }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { shape = AuraShape.Blob() }) { Text("Blob") }
+            Button(onClick = { shape = AuraShape.RoundedRect(0.3f) }) { Text("Rect") }
+            Button(onClick = { shape = AuraShape.Fill }) { Text("Fill") }
         }
     }
 }

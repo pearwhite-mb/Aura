@@ -14,7 +14,8 @@ uniform float  glowIntensity;
 uniform float  glowSpread;
 uniform float  warpStrength;
 uniform float  patternScale;
-uniform float  shapeExponent;
+uniform int   shapeMode;   
+uniform float shapeParam;  
 
 half4 samplePalette(float t) {
     half4 result = half4(0.0);
@@ -31,16 +32,28 @@ half4 samplePalette(float t) {
     return result;
 }
 
-half4 main(float2 fragCoord) {
-    float2 p = fragCoord / resolution * 2.0 - 1.0;
-    p.x *= resolution.x / resolution.y;
-
+float coverage(float2 p) {
+    if (shapeMode == 1) {
+        return 1.0;
+    }
+    if (shapeMode == 2) {
+        float2 h = resolution / min(resolution.x, resolution.y);
+        float r = min(shapeParam, min(h.x, h.y));
+        float2 q = abs(p) - h + float2(r);
+        float d = length(max(q, float2(0.0))) + min(max(q.x, q.y), 0.0) - r;  // < 0 внутри
+        return 1.0 - smoothstep(-2.0 * edgeSoftness, 0.0, d);
+    }
     float2 a = abs(p);
-    float dist = pow(pow(a.x, shapeExponent) + pow(a.y, shapeExponent), 1.0 / shapeExponent);
+    float dist = pow(pow(a.x, shapeParam) + pow(a.y, shapeParam), 1.0 / shapeParam);
+    float core = 1.0 - smoothstep(coreRadius - edgeSoftness, coreRadius + edgeSoftness, dist);
+    float fade = 1.0 - smoothstep(coreRadius, 1.0, dist);
+    float glow = pow(fade, glowSpread) * glowIntensity;
+    return core + (1.0 - core) * glow;
+}
 
-    float core  = 1.0 - smoothstep(coreRadius - edgeSoftness, coreRadius + edgeSoftness, dist);
-    float glow  = exp(-dist * dist * glowSpread) * glowIntensity;
-    float alpha = clamp(core + glow, 0.0, 1.0);
+half4 main(float2 fragCoord) {
+    float2 p = (fragCoord - 0.5 * resolution) / (0.5 * min(resolution.x, resolution.y));
+    float alpha = coverage(p);
 
     float2 w = p;
     w.x += sin(p.y * 2.5 + time * 0.3 + seed) * warpStrength;
