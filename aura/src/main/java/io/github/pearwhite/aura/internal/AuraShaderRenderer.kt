@@ -43,6 +43,8 @@ internal class AuraShaderRenderer {
         shader.setFloatUniform("glowSpread", style.glowSpread)
         shader.setFloatUniform("warpStrength", style.warpStrength)
         shader.setFloatUniform("patternScale", style.patternScale)
+        shader.setFloatUniform("depth", style.depth.coerceIn(0f, 1f))
+        shader.setFloatUniform("patternDetail", style.patternDetail)
         when (shape) {
             is AuraShape.Blob -> {
                 shader.setIntUniform("shapeMode", 0)

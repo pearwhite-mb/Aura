@@ -65,6 +65,12 @@ private val InitialEntries = listOf(
     AuraEntry(Color(0xFF1E88E5), 0.2f),
 )
 
+private val OrbEntries = listOf(
+    AuraEntry(Color(0xFFFFA63D), 0.18f), AuraEntry(Color(0xFFF2602C), 0.30f),
+    AuraEntry(Color(0xFFC8283A), 0.25f), AuraEntry(Color(0xFF5B2C9E), 0.19f),
+    AuraEntry(Color(0xFFC04FE0), 0.08f),
+)
+
 private class StyleParam(
     val name: String,
     val range: ClosedFloatingPointRange<Float>,
@@ -74,12 +80,26 @@ private class StyleParam(
 
 private val StyleParams = listOf(
     StyleParam("coreRadius", 0.1f..1f, { it.coreRadius }, { s, v -> s.copy(coreRadius = v) }),
-    StyleParam("edgeSoftness", 0.01f..0.5f, { it.edgeSoftness }, { s, v -> s.copy(edgeSoftness = v) }),
-    StyleParam("glowIntensity", 0f..1f, { it.glowIntensity }, { s, v -> s.copy(glowIntensity = v) }),
+    StyleParam(
+        "edgeSoftness",
+        0.01f..0.5f,
+        { it.edgeSoftness },
+        { s, v -> s.copy(edgeSoftness = v) }),
+    StyleParam(
+        "glowIntensity",
+        0f..1f,
+        { it.glowIntensity },
+        { s, v -> s.copy(glowIntensity = v) }),
     StyleParam("glowSpread", 0.5f..10f, { it.glowSpread }, { s, v -> s.copy(glowSpread = v) }),
     StyleParam("warpStrength", 0f..1f, { it.warpStrength }, { s, v -> s.copy(warpStrength = v) }),
     StyleParam("patternScale", 1f..15f, { it.patternScale }, { s, v -> s.copy(patternScale = v) }),
     StyleParam("colorBlend", 0.01f..0.4f, { it.colorBlend }, { s, v -> s.copy(colorBlend = v) }),
+    StyleParam("depth", 0f..1f, { it.depth }, { s, v -> s.copy(depth = v) }),
+    StyleParam(
+        "patternDetail",
+        0f..8f,
+        { it.patternDetail },
+        { s, v -> s.copy(patternDetail = v) }),
 )
 
 private fun fmt(v: Float): String = "%.2f".format(Locale.ROOT, v)
@@ -89,6 +109,7 @@ private fun AuraStyle.toCode(): String {
             "    patternFit = AuraPatternFit.$patternFit"
     return lines.joinToString(separator = ",\n", prefix = "AuraStyle(\n", postfix = "\n)")
 }
+
 @Composable
 fun AuraPlayground(modifier: Modifier = Modifier) {
     var style by remember { mutableStateOf(AuraDefaults.Style) }
@@ -96,6 +117,7 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
     var exponent by remember { mutableFloatStateOf(2f) }
     var corner by remember { mutableFloatStateOf(0.3f) }
     var area by remember { mutableStateOf(AreaKind.Square) }
+    var seed by remember { mutableFloatStateOf(4.1f) }
     var speed by remember { mutableFloatStateOf(1f) }
     var entries by remember { mutableStateOf(InitialEntries) }
 
@@ -113,7 +135,10 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize()) {
         // Аура закреплена сверху, чтобы видеть её во время движения слайдеров
         Box(
-            Modifier.fillMaxWidth().height(292.dp).padding(16.dp),
+            Modifier
+                .fillMaxWidth()
+                .height(292.dp)
+                .padding(16.dp),
             contentAlignment = Alignment.Center,
         ) {
             Aura(
@@ -121,11 +146,14 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
                 style = style,
                 shape = shape,
                 animation = animation,
+                seed = seed,
                 colorTransition = tween(150),
                 modifier = when (area) {
                     AreaKind.Square -> Modifier.size(260.dp)
                     AreaKind.Wide -> Modifier.fillMaxSize()
-                    AreaKind.Tall -> Modifier.width(140.dp).height(260.dp)
+                    AreaKind.Tall -> Modifier
+                        .width(140.dp)
+                        .height(260.dp)
                 },
             )
         }
@@ -142,7 +170,12 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
             ChipRow(ShapeKind.entries, kind, { it.title }) { kind = it }
             when (kind) {
                 ShapeKind.Blob -> ParamSlider("Blob.exponent", exponent, 0.5f..8f) { exponent = it }
-                ShapeKind.RoundedRect -> ParamSlider("RoundedRect.cornerRadius", corner, 0f..1f) { corner = it }
+                ShapeKind.RoundedRect -> ParamSlider(
+                    "RoundedRect.cornerRadius",
+                    corner,
+                    0f..1f
+                ) { corner = it }
+
                 ShapeKind.Fill -> Unit
             }
 
@@ -163,6 +196,12 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
                 )
             }
 
+            ParamSlider("seed", seed, 0f..100f) { seed = it }
+            OutlinedButton(onClick = {
+                style = AuraDefaults.OrbStyle; entries = OrbEntries
+                kind = ShapeKind.Blob; exponent = 2f
+            }) { Text("Пресет Orb") }
+
             SectionTitle("Анимация")
             ParamSlider("Скорость (0 = без анимации)", speed, 0f..3f) { speed = it }
 
@@ -173,20 +212,27 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
             SectionTitle("Палитра (веса)")
             entries.forEachIndexed { i, e ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(20.dp).clip(CircleShape).background(color = e.color))
+                    Box(Modifier
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(color = e.color))
                     Slider(
                         value = e.weight,
                         onValueChange = { w ->
                             entries = entries.toMutableList().also { it[i] = e.copy(weight = w) }
                         },
-                        modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 8.dp),
                     )
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
                     enabled = entries.size < AuraDefaults.MaxColors,
-                    onClick = { entries = entries + AuraEntry(AuraDefaults.vibrantPalette(1).first(), 0.5f) },
+                    onClick = {
+                        entries = entries + AuraEntry(AuraDefaults.vibrantPalette(1).first(), 0.5f)
+                    },
                 ) { Text("+ цвет") }
                 OutlinedButton(
                     enabled = entries.size > 1,
@@ -194,7 +240,8 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
                 ) { Text("− цвет") }
                 OutlinedButton(
                     onClick = {
-                        entries = entries.map { it.copy(color = AuraDefaults.vibrantPalette(1).first()) }
+                        entries =
+                            entries.map { it.copy(color = AuraDefaults.vibrantPalette(1).first()) }
                     },
                 ) { Text("Новые цвета") }
             }
@@ -223,20 +270,32 @@ private fun ParamSlider(
     Column {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label, style = MaterialTheme.typography.bodyMedium)
-            Text(fmt(value), style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace)
+            Text(
+                fmt(value),
+                style = MaterialTheme.typography.bodyMedium,
+                fontFamily = FontFamily.Monospace
+            )
         }
         Slider(value = value, onValueChange = onChange, valueRange = range)
     }
 }
 
 @Composable
-private fun <T> ChipRow(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
+private fun <T> ChipRow(
+    options: List<T>,
+    selected: T,
+    label: (T) -> String,
+    onSelect: (T) -> Unit
+) {
     Row(
         Modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         options.forEach {
-            FilterChip(selected = it == selected, onClick = { onSelect(it) }, label = { Text(label(it)) })
+            FilterChip(
+                selected = it == selected,
+                onClick = { onSelect(it) },
+                label = { Text(label(it)) })
         }
     }
 }

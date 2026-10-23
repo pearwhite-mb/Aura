@@ -11,5 +11,7 @@ public data class AuraStyle(
     val warpStrength: Float = 0.4f,    // «жидкость»: сила искажения
     val patternScale: Float = 6f,      // масштаб цветовых пятен
     val colorBlend: Float = 0.2f,      // полуширина перехода между цветами, 0..0.5
+    val depth: Float = 0f,            // 0 — плоский узор, 1 — узор обёрнут вокруг шара.
+    val patternDetail: Float = 4.5f,  // Мелкая рябь внутри пятен: меньше — глаже
     val patternFit: AuraPatternFit = AuraPatternFit.Auto
 )

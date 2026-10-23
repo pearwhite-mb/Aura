@@ -17,6 +17,8 @@ uniform float  patternScale;
 uniform int   shapeMode;   
 uniform float shapeParam;  
 uniform float2 patternHalf;
+uniform float depth;
+uniform float patternDetail;
 
 half4 samplePalette(float t) {
     half4 result = half4(0.0);
@@ -52,21 +54,33 @@ float coverage(float2 p) {
     return core + (1.0 - core) * glow;
 }
 
+float3 patternCoords(float2 q) {
+    if (depth <= 0.0) return float3(q, 0.0);
+    float2 u = q / coreRadius;
+    float2 c = u / max(length(u), 1.0);            // за пределами шара берём ближайшую точку края
+    float z = sqrt(max(1.0 - dot(c, c), 0.0));
+    return float3(c * coreRadius, z * coreRadius * depth);
+}
+
 half4 main(float2 fragCoord) {
     float2 p = (fragCoord - 0.5 * resolution) / (0.5 * min(resolution.x, resolution.y));
     float alpha = coverage(p);
 
     float2 q = (fragCoord - 0.5 * resolution) / patternHalf;
-    float2 w = q;
-    w.x += sin(q.y * 2.5 + time * 0.3 + seed) * warpStrength;
-    w.y += cos(q.x * 2.5 - time * 0.4 - seed) * warpStrength;
+    float3 pc = patternCoords(q);
+
+    float3 w = pc;
+    w.x += sin(pc.y * 2.5 + pc.z * 1.7 + time * 0.3 + seed) * warpStrength;
+    w.y += cos(pc.x * 2.5 + pc.z * 1.3 - time * 0.4 - seed) * warpStrength;
+    w.z += depth * sin(pc.x * 1.9 - pc.y * 2.1 + time * 0.2 + seed * 0.7) * warpStrength;
 
     float u = 0.5
-        + 0.25 * sin(w.x * patternScale + time * 0.5)
-        + 0.25 * cos(w.y * patternScale - time * 0.3 + sin((w.x + w.y) * 4.5));
+        + 0.25 * sin(w.x * patternScale + w.z * patternScale * 0.7 + time * 0.5)
+        + 0.25 * cos(w.y * patternScale - w.z * patternScale * 0.5 - time * 0.3
+            + sin((w.x + w.y + w.z) * patternDetail));
     float t = mix(u, smoothstep(0.0, 1.0, u), 0.6);
 
-    half4 c = samplePalette(t);
-    return half4(c.rgb * half(alpha), half(alpha));
+    half4 color = samplePalette(t);
+    return half4(color.rgb * half(alpha), half(alpha));
 }
 """
