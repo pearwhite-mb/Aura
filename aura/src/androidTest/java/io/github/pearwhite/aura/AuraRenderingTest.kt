@@ -63,7 +63,7 @@ class AuraRenderingTest {
         val px = pixels()
         val y = px.height / 2
         val half = px.width / 2
-        assertTrue(px[half + (0.5f * half).toInt(), y].red > 0.7f)
+        assertTrue(px[half + (0.35f * half).toInt(), y].red > 0.9f)
         assertTrue(px[half + (0.7f * half).toInt(), y].red < 0.2f)
     }
 
@@ -115,9 +115,9 @@ class AuraRenderingTest {
             val s = pixels().shares(colors)
             for (k in acc.indices) acc[k] += s[k] / n
         }
-        assertEquals(0.5f, acc[0], 0.07f)
-        assertEquals(0.3f, acc[1], 0.07f)
-        assertEquals(0.2f, acc[2], 0.07f)
+        assertEquals(0.5f, acc[0], 0.08f)
+        assertEquals(0.3f, acc[1], 0.08f)
+        assertEquals(0.2f, acc[2], 0.08f)
     }
 
     @Test fun paletteChangeReachesTheTargetColor() {

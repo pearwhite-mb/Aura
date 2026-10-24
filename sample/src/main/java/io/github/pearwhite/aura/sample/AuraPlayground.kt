@@ -60,14 +60,10 @@ private enum class AreaKind(val title: String) {
 private data class AuraEntry(val color: Color, val weight: Float)
 
 private val InitialEntries = listOf(
-    AuraEntry(Color(0xFFE53935), 0.5f),
-    AuraEntry(Color(0xFF43A047), 0.3f),
-    AuraEntry(Color(0xFF1E88E5), 0.2f),
-)
-
-private val OrbEntries = listOf(
-    AuraEntry(Color(0xFFFFA63D), 0.18f), AuraEntry(Color(0xFFF2602C), 0.30f),
-    AuraEntry(Color(0xFFC8283A), 0.25f), AuraEntry(Color(0xFF5B2C9E), 0.19f),
+    AuraEntry(Color(0xFFFFA63D), 0.18f),
+    AuraEntry(Color(0xFFF2602C), 0.30f),
+    AuraEntry(Color(0xFFC8283A), 0.25f),
+    AuraEntry(Color(0xFF5B2C9E), 0.19f),
     AuraEntry(Color(0xFFC04FE0), 0.08f),
 )
 
@@ -197,10 +193,6 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
             }
 
             ParamSlider("seed", seed, 0f..100f) { seed = it }
-            OutlinedButton(onClick = {
-                style = AuraDefaults.OrbStyle; entries = OrbEntries
-                kind = ShapeKind.Blob; exponent = 2f
-            }) { Text("Пресет Orb") }
 
             SectionTitle("Анимация")
             ParamSlider("Скорость (0 = без анимации)", speed, 0f..3f) { speed = it }

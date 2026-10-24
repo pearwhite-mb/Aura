@@ -13,21 +13,6 @@ public object AuraDefaults {
     public val ColorTransition: AnimationSpec<Float> = tween(durationMillis = 800, easing = FastOutSlowInEasing)
     public val Shape: AuraShape = AuraShape.Blob()
 
-    public val OrbStyle: AuraStyle = AuraStyle(
-        coreRadius = 0.5f, edgeSoftness = 0.05f,
-        glowIntensity = 0.2f, glowSpread = 3f,
-        warpStrength = 0.4f, patternScale = 2.4f, colorBlend = 0.25f,
-        depth = 1f, patternDetail = 1.2f,
-    )
-
-    public val OrbPalette: AuraPalette = AuraPalette.weighted(
-        Color(0xFFFFA63D) to 0.18f,   // жёлто-оранжевый
-        Color(0xFFF2602C) to 0.30f,   // оранжевый
-        Color(0xFFC8283A) to 0.25f,   // красный
-        Color(0xFF5B2C9E) to 0.19f,   // фиолетовый
-        Color(0xFFC04FE0) to 0.08f,   // розово-лиловый (верхний край)
-    )
-
     public fun vibrantPalette(count: Int = 4, random: Random = Random.Default): List<Color> =
         List(count.coerceIn(1, MaxColors)) {
             Color.hsv(
@@ -36,4 +21,20 @@ public object AuraDefaults {
                 value = 0.85f + random.nextFloat() * 0.15f,
             )
         }
+
+    public fun harmonicPalette(count: Int = 4, random: Random = Random): List<Color> {
+        val n = count.coerceIn(1, MaxColors)
+        val start = random.nextFloat() * 360f
+        val arc = 80f + random.nextFloat() * 140f
+        val direction = if (random.nextBoolean()) 1f else -1f
+        val darkening = 0.2f + random.nextFloat() * 0.3f
+        return List(n) { i ->
+            val f = if (n == 1) 0f else i / (n - 1f)
+            Color.hsv(
+                hue = ((start + direction * arc * f) % 360f + 360f) % 360f,
+                saturation = 0.7f + random.nextFloat() * 0.3f,
+                value = (1f - darkening * f + (random.nextFloat() - 0.5f) * 0.1f).coerceIn(0.5f, 1f),
+            )
+        }
+    }
 }
