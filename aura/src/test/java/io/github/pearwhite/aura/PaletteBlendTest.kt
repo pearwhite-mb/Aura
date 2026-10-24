@@ -1,7 +1,6 @@
 package io.github.pearwhite.aura
 
 import androidx.compose.ui.graphics.Color
-import io.github.pearwhite.aura.internal.PaletteFrame
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import org.junit.Test

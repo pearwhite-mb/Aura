@@ -1,7 +1,6 @@
 package io.github.pearwhite.aura
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
@@ -28,14 +27,45 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import io.github.pearwhite.aura.internal.AuraShaderRenderer
-import io.github.pearwhite.aura.internal.PaletteFrame
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.time.Duration.Companion.milliseconds
 
+/*
+ * Common period of the shader's time terms. Every time multiplier in the shader is a multiple of
+ * 0.1, so 20*PI is a whole number of periods for all of them: wrapping time with this value is
+ * seamless. If you add a pattern with other multipliers, keep this property or the animation
+ * will jump once per period (about 63 seconds).
+ * RU: Общий период временных слагаемых шейдера. Все множители времени в шейдере кратны 0.1,
+ * RU: поэтому 20*PI содержит целое число периодов у каждого из них: зацикливание бесшовное.
+ * RU: Если добавите паттерн с другими множителями, сохраните это свойство, иначе анимация будет
+ * RU: скакать раз в период (около 63 секунд).
+ */
 private const val TIME_PERIOD = (20 * PI).toFloat()
 
+/**
+ * An animated "aura" (soft colored blob, sphere, or fill) drawn by an AGSL shader.
+ * The shader needs Android 13+; on older versions [fallback] or a plain gradient is shown.
+ *
+ * @param palette Colors and their shares of the area. Empty palette draws nothing.
+ * @param modifier Size and position. The aura is drawn behind the content of this node.
+ * @param style Visual parameters, see [AuraStyle].
+ * @param shape Outline of the aura, see [AuraShape].
+ * @param animation Motion over time, see [AuraAnimation].
+ * @param seed Selects a particular arrangement of spots; the same seed gives the same picture.
+ * @param colorTransition Spec for smooth palette changes; null applies changes instantly.
+ * @param fallback Content for devices below Android 13. Default: a gradient from the palette.
+ *
+ * RU: Анимированная «аура» (мягкое цветное пятно, шар или заливка), рисуется AGSL-шейдером.
+ * RU: Шейдеру нужен Android 13+; на более старых версиях показывается [fallback] или градиент.
+ * RU: palette — цвета и их доли площади (пустая палитра ничего не рисует).
+ * RU: modifier — размер и положение; аура рисуется позади содержимого этого узла.
+ * RU: style, shape, animation — стиль, контур и движение.
+ * RU: seed — выбирает конкретное расположение пятен; одинаковый seed даёт одинаковую картинку.
+ * RU: colorTransition — анимация смены палитры; null — менять мгновенно.
+ * RU: fallback — содержимое для устройств ниже Android 13; по умолчанию градиент из палитры.
+ */
 @Composable
 public fun Aura(
     palette: AuraPalette,
@@ -49,6 +79,10 @@ public fun Aura(
 ) {
     if (palette.isEmpty) return
 
+    /* The API check lives here, not in AuraShader: AuraShader (and the RuntimeShader class) must
+     * never be touched on devices below 33.
+     * RU: Проверка версии API здесь, а не в AuraShader: AuraShader (и класс RuntimeShader) нельзя
+     * RU: трогать на устройствах ниже 33. */
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         AuraShader(palette, modifier, style, shape, animation, seed, colorTransition)
     } else if (fallback != null) {
@@ -64,9 +98,18 @@ private fun AuraShader(
     palette: AuraPalette, modifier: Modifier, style: AuraStyle, shape: AuraShape,
     animation: AuraAnimation, seed: Float, colorTransition: AnimationSpec<Float>?,
 ) {
+    /* One renderer (and one RuntimeShader, which is expensive to create) per composition.
+     * RU: Один рендерер (и один RuntimeShader, который дорого создавать) на композицию. */
     val renderer = remember { AuraShaderRenderer() }
     val time = rememberAuraTime(animation)
     val frame = rememberPaletteFrame(palette, colorTransition)
+
+    /* IMPORTANT: `frame()` and `time.floatValue` are read inside the draw lambda, so state changes
+     * invalidate only the draw phase. Reading them in the composable body would recompose on
+     * every animation frame.
+     * RU: ВАЖНО: `frame()` и `time.floatValue` читаются внутри draw-лямбды, поэтому изменения
+     * RU: состояния инвалидируют только фазу отрисовки. Чтение в теле composable вызывало бы
+     * RU: рекомпозицию на каждом кадре анимации. */
     Spacer(modifier.drawBehind {
         renderer.draw(
             this,
@@ -79,7 +122,119 @@ private fun AuraShader(
     })
 }
 
+/*
+ * Time source for the shader. Returns a state holder that is read only in the draw phase.
+ * RU: Источник времени для шейдера. Возвращает состояние, которое читается только в фазе отрисовки.
+ */
+@Composable
+private fun rememberAuraTime(animation: AuraAnimation): FloatState {
+    /* Hoisted out of the coroutine: after a pause the pattern continues from the same place.
+     * RU: Вынесено за пределы корутины: после паузы узор продолжается с того же места. */
+    val time = remember { mutableFloatStateOf(0f) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+
+    LaunchedEffect(animation, lifecycle) {
+        if (animation !is AuraAnimation.Flow) return@LaunchedEffect
+
+        /* The block is cancelled when the lifecycle drops below STARTED (app in background) and
+         * restarted on return, so no frame callbacks run while nobody can see the aura.
+         * RU: Блок отменяется, когда жизненный цикл опускается ниже STARTED (приложение в фоне),
+         * RU: и запускается заново при возврате: пока ауру никто не видит, колбэки кадров не работают. */
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            /* Fresh reference point on every start: otherwise the first dt after a pause would be
+             * huge and the animation would jump.
+             * RU: Новая точка отсчёта при каждом запуске: иначе первый dt после паузы огромный,
+             * RU: и анимация скакнёт. */
+            var last = withFrameNanos { it }
+            while (true) {
+                /* Respect the system "animation scale = off" setting, which hand-written
+                 * frame loops do not honor automatically.
+                 * RU: Уважаем системную настройку «масштаб анимации = выкл.», которую ручные
+                 * RU: циклы по кадрам сами не учитывают. */
+                if (currentCoroutineContext()[MotionDurationScale]?.scaleFactor == 0f) {
+                    delay(500.milliseconds)
+                    last = withFrameNanos { it }
+                    continue
+                }
+                withFrameNanos { now ->
+                    val dt = (now - last) / 1_000_000_000f
+                    last = now
+                    /* Modulo keeps float precision on long sessions (see TIME_PERIOD).
+                     * RU: Остаток от деления сохраняет точность float на длинных сессиях (см. TIME_PERIOD). */
+                    time.floatValue = (time.floatValue + dt * animation.speed) % TIME_PERIOD
+                }
+            }
+        }
+    }
+    return time
+}
+
+/*
+ * Holds the "from" and "to" palettes of a running transition.
+ * RU: Хранит палитры «из» и «в» текущего перехода.
+ */
+private class PaletteTransition(initial: AuraPalette) {
+    var from = initial
+    var to = initial
+}
+
+/*
+ * Animates between palettes and exposes the current blend as a reusable frame.
+ * RU: Анимирует переход между палитрами и отдаёт текущую смесь как переиспользуемый кадр.
+ */
+@Composable
+private fun rememberPaletteFrame(
+    target: AuraPalette,
+    spec: AnimationSpec<Float>?,
+): () -> PaletteFrame {
+    val frame = remember { PaletteFrame() }
+    val transition = remember { PaletteTransition(target) }
+    val progress = remember { Animatable(1f) }
+
+    /* `spec` is read through rememberUpdatedState and is NOT an effect key. If it were a key,
+     * changing it mid-animation would cancel the effect, and the early return below would then
+     * freeze the animation halfway.
+     * RU: `spec` читается через rememberUpdatedState и НЕ является ключом эффекта. Будь он ключом,
+     * RU: смена посреди анимации отменила бы эффект, а ранний return ниже заморозил бы анимацию
+     * RU: на полпути. */
+    val currentSpec by rememberUpdatedState(spec)
+
+    LaunchedEffect(target) {
+        if (target == transition.to) return@LaunchedEffect
+
+        /* If a new palette arrives mid-transition, start from what is visible right now
+         * (a snapshot), so there is no visual jump.
+         * RU: Если новая палитра пришла посреди перехода, стартуем с того, что видно сейчас
+         * RU: (снимок), поэтому визуального скачка нет. */
+        transition.from = blend(transition.from, transition.to, progress.value)
+        transition.to = target
+
+        val s = currentSpec
+        if (s == null) {
+            progress.snapTo(1f)
+        } else {
+            progress.snapTo(0f)
+            progress.animateTo(1f, s)
+        }
+    }
+
+    /* Returned as a function so the caller reads `progress.value` in the draw phase.
+     * RU: Возвращается функцией, чтобы вызывающий читал `progress.value` в фазе отрисовки. */
+    return {
+        blendInto(transition.from, transition.to, progress.value, frame)
+        frame
+    }
+}
+
+/*
+ * Fallback for Android below 13: a gradient made of the palette, with the same shares.
+ * `filled = false` (Blob) fades to transparent like a sphere; `filled = true` covers the whole area.
+ * RU: Запасной вариант для Android ниже 13: градиент из палитры с теми же долями.
+ * RU: `filled = false` (Blob) растворяется в прозрачность как шар; `filled = true` покрывает всю область.
+ */
 private fun AuraPalette.toFallbackBrush(filled: Boolean): Brush {
+    /* A gradient needs at least two stops, so a single color is a plain fill.
+     * RU: Градиенту нужно минимум две точки, поэтому один цвет — это обычная заливка. */
     if (filled && colors.size == 1) return SolidColor(colors[0])
     var acc = 0f
     val stops = buildList {
@@ -93,94 +248,3 @@ private fun AuraPalette.toFallbackBrush(filled: Boolean): Brush {
     else Brush.radialGradient(colorStops = stops)
 }
 
-@Composable
-private fun rememberPaletteFrame(
-    target: AuraPalette,
-    spec: AnimationSpec<Float>?,
-): () -> PaletteFrame {
-    val frame = remember { PaletteFrame() }
-    val transition = remember { PaletteTransition(target) }
-    val progress = remember { Animatable(1f) }
-    val currentSpec by rememberUpdatedState(spec)
-
-    LaunchedEffect(target) {
-        if (target == transition.to) return@LaunchedEffect
-        transition.from = blend(transition.from, transition.to, progress.value)
-        transition.to = target
-        val s = currentSpec
-        if (s == null) {
-            progress.snapTo(1f)
-        } else {
-            progress.snapTo(0f)
-            progress.animateTo(1f, s)
-        }
-    }
-    return {
-        blendInto(transition.from, transition.to, progress.value, frame)
-        frame
-    }
-}
-
-private fun mixColor(a: Color, b: Color, f: Float): Color = when {
-    f <= 0f -> a
-    f >= 1f -> b
-    else -> lerp(a, b, f)
-}
-
-internal fun blendInto(a: AuraPalette, b: AuraPalette, f: Float, out: PaletteFrame) {
-    val n = maxOf(a.size, b.size)
-    var cumulative = 0f
-    for (i in 0 until n) {
-        val c = mixColor(a.colorAt(i), b.colorAt(i), f)
-        out.colors[i * 4] = c.red
-        out.colors[i * 4 + 1] = c.green
-        out.colors[i * 4 + 2] = c.blue
-        out.colors[i * 4 + 3] = c.alpha
-        cumulative += a.weightAt(i) + (b.weightAt(i) - a.weightAt(i)) * f
-        out.bounds[i] = cumulative
-    }
-    out.count = n
-}
-
-internal fun blend(a: AuraPalette, b: AuraPalette, f: Float): AuraPalette {
-    val n = maxOf(a.size, b.size)
-    return AuraPalette(
-        List(n) { mixColor(a.colorAt(it), b.colorAt(it), f) },
-        List(n) { a.weightAt(it) + (b.weightAt(it) - a.weightAt(it)) * f },
-    )
-}
-
-@Composable
-private fun rememberAuraTime(animation: AuraAnimation): FloatState {
-    val time = remember { mutableFloatStateOf(0f) }
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-
-    LaunchedEffect(animation, lifecycle) {
-        if (animation !is AuraAnimation.Flow) return@LaunchedEffect
-
-        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            var last = withFrameNanos { it }
-            while (true) {
-                if (currentCoroutineContext()[MotionDurationScale]?.scaleFactor == 0f) {
-                    delay(500.milliseconds)
-                    last = withFrameNanos { it }
-                    continue
-                }
-                withFrameNanos { now ->
-                    val dt = (now - last) / 1_000_000_000f
-                    last = now
-                    time.floatValue = (time.floatValue + dt * animation.speed) % TIME_PERIOD
-                }
-            }
-        }
-    }
-    return time
-}
-
-private fun AuraPalette.colorAt(i: Int): Color = colors[minOf(i, size - 1)]
-private fun AuraPalette.weightAt(i: Int): Float = if (i < size) weights[i] else 0f
-
-private class PaletteTransition(initial: AuraPalette) {
-    var from = initial
-    var to = initial
-}

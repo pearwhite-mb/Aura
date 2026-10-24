@@ -1,5 +1,21 @@
 package io.github.pearwhite.aura.internal
 
+/**
+ * AGSL source of the aura shader.
+ *
+ * Pipeline per pixel:
+ * 1. coverage(p): how opaque the aura is here (shape mask, in shape coordinates `p`).
+ * 2. patternCoords(...): pattern coordinates (optionally wrapped around a sphere).
+ * 3. warp + two waves -> scalar field u; equalized into t so that palette shares match weights.
+ * 4. samplePalette(t): blend palette colors; result is multiplied by coverage (premultiplied alpha).
+ *
+ * RU: Исходный код AGSL-шейдера ауры.
+ * RU: Конвейер для каждого пикселя:
+ * RU: 1. coverage(p): насколько здесь непрозрачна аура (маска формы, в координатах формы `p`).
+ * RU: 2. patternCoords(...): координаты узора (опционально «обёрнутые» вокруг шара).
+ * RU: 3. варп + две волны -> скалярное поле u; выравнивается в t, чтобы доли цветов совпадали с весами.
+ * RU: 4. samplePalette(t): смешивает цвета палитры; результат умножается на coverage (premultiplied alpha).
+ */
 internal const val AURA_SHADER_SRC = """
 uniform float2 resolution;
 uniform float4 colors[8];
@@ -43,7 +59,7 @@ float coverage(float2 p) {
         float2 h = resolution / min(resolution.x, resolution.y);
         float r = min(shapeParam, min(h.x, h.y));
         float2 q = abs(p) - h + float2(r);
-        float d = length(max(q, float2(0.0))) + min(max(q.x, q.y), 0.0) - r;  // < 0 внутри
+        float d = length(max(q, float2(0.0))) + min(max(q.x, q.y), 0.0) - r;
         return 1.0 - smoothstep(-2.0 * edgeSoftness, 0.0, d);
     }
     float2 a = abs(p);
@@ -55,13 +71,13 @@ float coverage(float2 p) {
 }
 
 float3 patternCoords(float2 pq) {
-    if (shapeMode == 0) {                          // Blob: узор на шаре
+    if (shapeMode == 0) {
         float2 u = pq / coreRadius;
-        float2 c = u / max(length(u), 1.0);        // за пределами шара берём ближайшую точку края
+        float2 c = u / max(length(u), 1.0);
         float z = sqrt(max(1.0 - dot(c, c), 0.0));
         return 0.5 * float3(c, z * depth);
     }
-    return 0.5 * float3(pq, 0.0);                  // Fill и RoundedRect: плоский узор
+    return 0.5 * float3(pq, 0.0);
 }
 
 half4 main(float2 fragCoord) {
@@ -69,9 +85,9 @@ half4 main(float2 fragCoord) {
     float alpha = coverage(p);
 
     float2 q = (fragCoord - 0.5 * resolution) / patternHalf;
-    float2 pq = (shapeMode == 0) ? p : q;       // у Blob узор всегда в координатах формы
+    float2 pq = (shapeMode == 0) ? p : q;
     float3 pc = patternCoords(pq);
-    float d = (shapeMode == 0) ? depth : 0.0;   // глубина только у шара
+    float d = (shapeMode == 0) ? depth : 0.0;
 
     float3 w = pc;
     w.x += sin(pc.y * 2.5 + pc.z * 1.7 + time * 0.3 + seed) * warpStrength;

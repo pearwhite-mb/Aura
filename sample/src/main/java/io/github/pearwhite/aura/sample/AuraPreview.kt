@@ -12,9 +12,9 @@ import androidx.compose.ui.unit.dp
 import io.github.pearwhite.aura.*
 
 private val PreviewPalette = AuraPalette.weighted(
-    Color(0xFFE53935) to 0.5f,
-    Color(0xFF43A047) to 0.3f,
-    Color(0xFF1E88E5) to 0.2f,
+    Color(0xFFFFA63D) to 0.5f,
+    Color(0xFFC8283A) to 0.3f,
+    Color(0xFF5B2C9E) to 0.2f,
 )
 
 @Composable
@@ -26,13 +26,13 @@ private fun PreviewSurface(content: @Composable BoxScope.() -> Unit) {
     )
 }
 
-@Preview(name = "Blob, по умолчанию")
+@Preview(name = "Blob, default")
 @Composable
 private fun BlobDefaultPreview() = PreviewSurface {
     Aura(PreviewPalette, Modifier.size(260.dp), animation = AuraAnimation.None)
 }
 
-@Preview(name = "Blob, без свечения")
+@Preview(name = "Blob, no glow")
 @Composable
 private fun BlobNoGlowPreview() = PreviewSurface {
     Aura(
@@ -42,7 +42,7 @@ private fun BlobNoGlowPreview() = PreviewSurface {
     )
 }
 
-@Preview(name = "Blob, резкие границы цветов")
+@Preview(name = "Blob, sharp color edges")
 @Composable
 private fun BlobSharpPreview() = PreviewSurface {
     Aura(
@@ -52,31 +52,29 @@ private fun BlobSharpPreview() = PreviewSurface {
     )
 }
 
-@Preview(name = "Blob, сквиркл")
+@Preview(name = "Blob, squircle")
 @Composable
 private fun SquirclePreview() = PreviewSurface {
     Aura(
-        PreviewPalette, Modifier.size(260.dp),
+        palette = PreviewPalette,
+        modifier = Modifier.size(260.dp),
+        style = AuraDefaults.Style.copy(depth = 0f),
         shape = AuraShape.Blob(exponent = 4f),
         animation = AuraAnimation.None,
     )
 }
 
-@Preview(name = "Доли 90/5/5")
+@Preview(name = "Weights 90/5/5")
 @Composable
 private fun SkewedWeightsPreview() = PreviewSurface {
     Aura(
-        AuraPalette.weighted(
-            Color(0xFFE53935) to 0.9f,
-            Color(0xFF43A047) to 0.05f,
-            Color(0xFF1E88E5) to 0.05f,
-        ),
+        PreviewPalette,
         Modifier.size(260.dp),
         animation = AuraAnimation.None,
     )
 }
 
-@Preview(name = "RoundedRect, широкая область")
+@Preview(name = "RoundedRect, wide area")
 @Composable
 private fun RoundedRectPreview() = PreviewSurface {
     Aura(
@@ -86,7 +84,7 @@ private fun RoundedRectPreview() = PreviewSurface {
     )
 }
 
-@Preview(name = "Fill, весь экран", device = "spec:width=411dp,height=891dp")
+@Preview(name = "Fill, full screen", device = "spec:width=411dp,height=891dp")
 @Composable
 private fun FillScreenPreview() {
     Aura(
