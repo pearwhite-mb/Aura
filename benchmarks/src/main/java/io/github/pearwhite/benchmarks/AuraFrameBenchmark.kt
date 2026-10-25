@@ -19,8 +19,12 @@ class AuraFrameBenchmark {
     @Test fun roundedRectCard() = measure("RoundedRectCard")
     @Test fun paletteSwitching() = measure("PaletteSwitching")
 
+    @Test fun fillFullScreen60Fps() = measure("FillFullScreen60Fps")
+    @Test fun fillFullScreen30Fps() = measure("FillFullScreen30Fps")
+    @Test fun fillFullScreen15Fps() = measure("FillFullScreen15Fps")
+
     private fun measure(scenario: String) = rule.measureRepeated(
-        packageName = "io.github.pearwhite.aura.sample", // todo: Вынести
+        packageName = "io.github.pearwhite.aura.sample",
         metrics = listOf(FrameTimingMetric()),
         iterations = 5,
         compilationMode = CompilationMode.Full(),

@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -30,6 +31,7 @@ import io.github.pearwhite.aura.internal.AuraShaderRenderer
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlin.math.PI
+import kotlin.math.ceil
 import kotlin.time.Duration.Companion.milliseconds
 
 /*
@@ -132,9 +134,14 @@ private fun rememberAuraTime(animation: AuraAnimation): FloatState {
      * RU: Вынесено за пределы корутины: после паузы узор продолжается с того же места. */
     val time = remember { mutableFloatStateOf(0f) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val view = LocalView.current
 
     LaunchedEffect(animation, lifecycle) {
         if (animation !is AuraAnimation.Flow) return@LaunchedEffect
+
+        /* How long to sleep before asking for the next frame (0 = no limit).
+         * RU: Сколько спать перед запросом следующего кадра (0 = без лимита). */
+        val sleepMs = frameSleepMs(animation.maxFps, view.display?.refreshRate ?: 60f)
 
         /* The block is cancelled when the lifecycle drops below STARTED (app in background) and
          * restarted on return, so no frame callbacks run while nobody can see the aura.
@@ -156,6 +163,14 @@ private fun rememberAuraTime(animation: AuraAnimation): FloatState {
                     last = withFrameNanos { it }
                     continue
                 }
+
+                /* Sleeping instead of skipping frames: no frame is requested while we wait, so the
+                 * system is free to keep the display at a lower refresh rate. The next vsync
+                 * completes the interval.
+                 * RU: Спим, а не пропускаем кадры: пока ждём, кадры не запрашиваются, и система
+                 * RU: может держать экран на пониженной частоте. Интервал дополняет следующий vsync. */
+                if (sleepMs > 0L) delay(sleepMs.milliseconds)
+
                 withFrameNanos { now ->
                     val dt = (now - last) / 1_000_000_000f
                     last = now
@@ -167,6 +182,26 @@ private fun rememberAuraTime(animation: AuraAnimation): FloatState {
         }
     }
     return time
+}
+
+/*
+* Sleep before asking for the next frame. The limit is expressed in display frames: one update every
+* k frames, with k rounded UP so the limit is never exceeded (50 fps on 120 Hz becomes 40, not 60).
+* We wake in the middle between two vsyncs ((k - 0.5) periods): the next vsync then completes exactly
+* k periods, and timer jitter of up to half a period in either direction does not change the result.
+* The tiny subtraction protects from float noise: displays report 120.0 as 119.99998 or 60.000004.
+* RU: Сон перед запросом следующего кадра. Лимит выражаем в кадрах экрана: одно обновление на k кадров,
+* RU: k округляется ВВЕРХ, чтобы лимит не превышался (50 fps на 120 Гц станет 40, а не 60).
+* RU: Просыпаемся посередине между двумя vsync ((k - 0.5) периода): следующий vsync дополняет интервал
+* RU: ровно до k периодов, и дрожание таймера до полпериода в любую сторону результат не меняет.
+* RU: Малое вычитание защищает от шума float: экраны отдают 120.0 как 119.99998, а 60.0 как 60.000004.
+*/
+private fun frameSleepMs(maxFps: Int?, refreshHz: Float): Long {
+    if (maxFps == null || maxFps <= 0) return 0L
+    val hz = refreshHz.coerceAtLeast(1f)
+    val k = ceil(hz / maxFps - 0.01f).toInt()
+    if (k <= 1) return 0L                      // limit is not below the display rate: nothing to do
+    return ((k - 0.5f) * 1000f / hz).toLong()
 }
 
 /*

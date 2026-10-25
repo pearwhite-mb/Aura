@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -14,8 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import io.github.pearwhite.aura.Aura
+import io.github.pearwhite.aura.AuraAnimation
 import io.github.pearwhite.aura.AuraDefaults
 import io.github.pearwhite.aura.AuraPalette
 import io.github.pearwhite.aura.AuraShape
@@ -29,11 +32,22 @@ enum class Scenario {
     FillEightColorsDetailed,
     RoundedRectCard,
     PaletteSwitching,
+    FillFullScreen60Fps,
+    FillFullScreen30Fps,
+    FillFullScreen15Fps,
+    FillFullScreenStatic,
 }
 
 @Composable
 fun BenchmarkScreen(scenario: Scenario) {
     val palette = AuraDefaults.Palette
+    val view = LocalView.current
+
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
+    }
+
     when (scenario) {
         Scenario.BlobSmall ->
             Box(Modifier.fillMaxSize(), Alignment.Center) { Aura(palette, Modifier.size(300.dp)) }
@@ -74,5 +88,37 @@ fun BenchmarkScreen(scenario: Scenario) {
             }
             Aura(p, Modifier.fillMaxSize(), shape = AuraShape.Fill)
         }
+
+        Scenario.FillFullScreen60Fps ->
+            Aura(
+                palette = palette,
+                modifier = Modifier.fillMaxSize(),
+                shape = AuraShape.Fill,
+                animation = AuraAnimation.Flow(maxFps = 60)
+            )
+
+        Scenario.FillFullScreen30Fps ->
+            Aura(
+                palette = palette,
+                modifier = Modifier.fillMaxSize(),
+                shape = AuraShape.Fill,
+                animation = AuraAnimation.Flow(maxFps = 30)
+            )
+
+        Scenario.FillFullScreen15Fps ->
+            Aura(
+                palette = palette,
+                modifier = Modifier.fillMaxSize(),
+                shape = AuraShape.Fill,
+                animation = AuraAnimation.Flow(maxFps = 15)
+            )
+
+        Scenario.FillFullScreenStatic ->
+            Aura(
+                palette = palette,
+                modifier = Modifier.fillMaxSize(),
+                shape = AuraShape.Fill,
+                animation = AuraAnimation.None
+            )
     }
 }

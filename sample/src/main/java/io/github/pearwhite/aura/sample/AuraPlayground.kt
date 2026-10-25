@@ -116,6 +116,7 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
     var seed by remember { mutableFloatStateOf(4.1f) }
     var speed by remember { mutableFloatStateOf(1f) }
     var entries by remember { mutableStateOf(InitialEntries) }
+    var maxFps by remember { mutableStateOf<Int?>(null) }
 
     val palette = remember(entries) {
         AuraPalette.weighted(entries.map { it.color to it.weight })
@@ -126,7 +127,7 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
         ShapeKind.Fill -> AuraShape.Fill
     }
     val animation: AuraAnimation =
-        if (speed == 0f) AuraAnimation.None else AuraAnimation.Flow(speed)
+        if (speed == 0f) AuraAnimation.None else AuraAnimation.Flow(speed, maxFps)
 
     Column(modifier.fillMaxSize()) {
         // Аура закреплена сверху, чтобы видеть её во время движения слайдеров
@@ -200,6 +201,9 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
             ChipRow(AuraPatternFit.entries, style.patternFit, { it.name }) {
                 style = style.copy(patternFit = it)
             }
+
+            Text("Лимит FPS", style = MaterialTheme.typography.bodyMedium)
+            ChipRow(listOf(null, 60, 30, 15), maxFps, { it?.toString() ?: "без лимита" }) { maxFps = it }
 
             SectionTitle("Палитра (веса)")
             entries.forEachIndexed { i, e ->
