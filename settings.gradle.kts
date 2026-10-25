@@ -27,3 +27,4 @@ rootProject.name = "AuraCompose"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 include(":sample")
 include(":aura")
+include(":benchmarks")
