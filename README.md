@@ -5,18 +5,25 @@ Soft, animated "aura" for Jetpack Compose: a glowing sphere, a rounded card or a
 ## Preview
 
 <p align="center">
-  <img src="docs/demo/demo_preview_1.webm" width="32%" alt="Blob animation" />
-  <img src="docs/demo/demo_preview_2.webm" width="32%" alt="Palette animation" />
-  <img src="docs/demo/demo_preview_3.webm" width="32%" alt="Shape animation" />
+  <img src="docs/demo/demo_preview_1.gif" width="32%" alt="Blob animation" />
+  <img src="docs/demo/demo_preview_2.gif" width="32%" alt="Fill animation" />
+  <img src="docs/demo/demo_preview_3.gif" width="32%" alt="Rounded Rectangle animation" />
+</p>
+
+<p align="center">
+  <em>Blob animation · Fill animation · Rounded Rectangle animation</em>
 </p>
 
 ## Screenshots
 
-![Palettes](docs/images/random_palettes.png)
+<p align="center">
+  <img src="docs/images/random_palettes.png" width="80%" alt="Random color palettes" />
+</p>
 
-![Screenshot_1](docs/images/screenshot_1.png)
-
-![Screenshot_2](docs/images/screenshot_2.png)
+<p align="center">
+  <img src="docs/images/screenshot_1.png" width="48%" alt="Aura example 1" />
+  <img src="docs/images/screenshot_2.png" width="48%" alt="Aura example 2" />
+</p>
 
 ![Min SDK](https://img.shields.io/badge/minSdk-26-brightgreen)
 ![Shader](https://img.shields.io/badge/shader-Android%2013%2B-blue)
