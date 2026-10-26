@@ -5,9 +5,10 @@ Soft, animated "aura" for Jetpack Compose: a glowing sphere, a rounded card or a
 ## Preview
 
 <p align="center">
-  <img src="docs/demo/demo_preview_1.gif" width="32%" alt="Blob animation" />
-  <img src="docs/demo/demo_preview_2.gif" width="32%" alt="Fill animation" />
-  <img src="docs/demo/demo_preview_3.gif" width="32%" alt="Rounded Rectangle animation" />
+  <img src="docs/demo/demo_preview_1.gif" width="25%" alt="Blob animation" />
+  <img src="docs/demo/demo_preview_2.gif" width="25%" alt="Fill animation" />
+  <img src="docs/demo/demo_preview_3.gif" width="25%" alt="Rounded Rectangle animation" />
+  <img src="docs/demo/demo_preview_4.gif" width="25%" alt="Rounded Rectangle animation" />
 </p>
 
 <p align="center">
@@ -17,12 +18,12 @@ Soft, animated "aura" for Jetpack Compose: a glowing sphere, a rounded card or a
 ## Screenshots
 
 <p align="center">
-  <img src="docs/images/random_palettes.png" width="80%" alt="Random color palettes" />
+  <img src="docs/images/screenshot_1.png" width="48%" alt="Aura example 1" />
+  <img src="docs/images/screenshot_2.png" width="48%" alt="Aura example 2" />
 </p>
 
 <p align="center">
-  <img src="docs/images/screenshot_1.png" width="48%" alt="Aura example 1" />
-  <img src="docs/images/screenshot_2.png" width="48%" alt="Aura example 2" />
+  <img src="docs/images/random_palettes.png" width="80%" alt="Random color palettes" />
 </p>
 
 ![Min SDK](https://img.shields.io/badge/minSdk-26-brightgreen)
