@@ -2,28 +2,33 @@
 
 Soft, animated "aura" for Jetpack Compose: a glowing sphere, a rounded card or a full-screen background, drawn by a single AGSL shader. You pass colors (optionally with shares of the area), pick a shape, and the library does the rest.
 
-## Preview
+Demo
 
 <p align="center">
-  <img src="docs/demo/demo_preview_1.gif" width="25%" alt="Blob animation" />
-  <img src="docs/demo/demo_preview_2.gif" width="25%" alt="Fill animation" />
-  <img src="docs/demo/demo_preview_3.gif" width="25%" alt="Rounded Rectangle animation" />
-  <img src="docs/demo/demo_preview_4.gif" width="25%" alt="Rounded Rectangle animation" />
+  <img src="docs/demo/demo_preview_1.gif" width="40%" alt="Blob animation" />
+  <img src="docs/demo/demo_preview_2.gif" width="40%" alt="Random Blob animation" />
 </p>
 
 <p align="center">
-  <em>Blob animation · Fill animation · Rounded Rectangle animation</em>
-</p>
-
-## Screenshots
-
-<p align="center">
-  <img src="docs/images/screenshot_1.png" width="48%" alt="Aura example 1" />
-  <img src="docs/images/screenshot_2.png" width="48%" alt="Aura example 2" />
+  <img src="docs/demo/demo_preview_3.gif" width="40%" alt="Rounded Rectangle animation" />
+  <img src="docs/demo/demo_preview_4.gif" width="40%" alt="Fill animation" />
 </p>
 
 <p align="center">
-  <img src="docs/images/random_palettes.png" width="80%" alt="Random color palettes" />
+  <em>Blob · Random Blob · Rounded Rectangle · Fill</em>
+</p>
+
+Playground Screenshots
+
+<p align="center">
+  <img src="docs/images/screenshot_1.png" width="48%" alt="Playground screenshot 1" />
+  <img src="docs/images/screenshot_2.png" width="48%" alt="Playground screenshot 2" />
+</p>
+
+Random Palette Examples
+
+<p align="center">
+  <img src="docs/images/random_palettes.png" width="80%" alt="Random color palette examples" />
 </p>
 
 ![Min SDK](https://img.shields.io/badge/minSdk-26-brightgreen)
