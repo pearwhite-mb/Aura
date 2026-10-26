@@ -5,13 +5,10 @@ Soft, animated "aura" for Jetpack Compose: a glowing sphere, a rounded card or a
 Demo
 
 <p align="center">
-  <img src="docs/demo/demo_preview_1.gif" width="40%" alt="Blob animation" />
-  <img src="docs/demo/demo_preview_2.gif" width="40%" alt="Random Blob animation" />
-</p>
-
-<p align="center">
-  <img src="docs/demo/demo_preview_3.gif" width="40%" alt="Rounded Rectangle animation" />
-  <img src="docs/demo/demo_preview_4.gif" width="40%" alt="Fill animation" />
+  <img src="docs/demo/demo_preview_1.gif" width="24%" alt="Blob animation" />
+  <img src="docs/demo/demo_preview_2.gif" width="24%" alt="Random Blob animation" />
+  <img src="docs/demo/demo_preview_3.gif" width="24%" alt="Rounded Rectangle animation" />
+  <img src="docs/demo/demo_preview_4.gif" width="24%" alt="Fill animation" />
 </p>
 
 <p align="center">
