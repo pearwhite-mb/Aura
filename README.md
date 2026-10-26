@@ -4,19 +4,19 @@ Soft, animated "aura" for Jetpack Compose: a glowing sphere, a rounded card or a
 
 ## Preview
 
+<p align="center">
+  <img src="docs/demo/demo_preview_1.webm" width="32%" alt="Blob animation" />
+  <img src="docs/demo/demo_preview_2.webm" width="32%" alt="Palette animation" />
+  <img src="docs/demo/demo_preview_3.webm" width="32%" alt="Shape animation" />
+</p>
 
-
-![Blob](docs/gifs/blob.gif)
-
-![Fill](docs/gifs/fill.gif)
-
-![Rounded_rectangle](docs/gifs/rounded_rectangle.gif)
+## Screenshots
 
 ![Palettes](docs/images/random_palettes.png)
 
-![Palettes](docs/images/screenshot_1.png)
+![Screenshot_1](docs/images/screenshot_1.png)
 
-![Palettes](docs/images/screenshot_2.png)
+![Screenshot_2](docs/images/screenshot_2.png)
 
 ![Min SDK](https://img.shields.io/badge/minSdk-26-brightgreen)
 ![Shader](https://img.shields.io/badge/shader-Android%2013%2B-blue)
