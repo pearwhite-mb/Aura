@@ -8,13 +8,6 @@ package io.github.pearwhite.aura.internal
  * 2. patternCoords(...): pattern coordinates (optionally wrapped around a sphere).
  * 3. warp + two waves -> scalar field u; equalized into t so that palette shares match weights.
  * 4. samplePalette(t): blend palette colors; result is multiplied by coverage (premultiplied alpha).
- *
- * RU: Исходный код AGSL-шейдера ауры.
- * RU: Конвейер для каждого пикселя:
- * RU: 1. coverage(p): насколько здесь непрозрачна аура (маска формы, в координатах формы `p`).
- * RU: 2. patternCoords(...): координаты узора (опционально «обёрнутые» вокруг шара).
- * RU: 3. варп + две волны -> скалярное поле u; выравнивается в t, чтобы доли цветов совпадали с весами.
- * RU: 4. samplePalette(t): смешивает цвета палитры; результат умножается на coverage (premultiplied alpha).
  */
 internal const val AURA_SHADER_SRC = """
 uniform float2 resolution;

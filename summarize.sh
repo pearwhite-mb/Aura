@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Summarizes results.csv: mean, spread and difference from the static baseline per scenario.
-# RU: Сводка по results.csv: среднее, разброс и разница с базовой линией по каждому сценарию.
 set -euo pipefail
 export LC_ALL=C   # dot as the decimal separator, regardless of the system locale
 
@@ -10,7 +9,6 @@ BASE="${2:-FillFullScreenStatic}"
 [ -f "$FILE" ] || { echo "File not found: $FILE" >&2; exit 1; }
 
 # `tr` removes Windows line endings (CRLF), which would otherwise stick to the last column.
-# RU: `tr` убирает окончания строк Windows (CRLF), иначе они прилипнут к последней колонке.
 tr -d '\r' < "$FILE" | awk -F, -v base="$BASE" '
 $1 == "scenario" { next }          # header (also skips repeated headers)
 NF < 9           { next }          # broken or incomplete line

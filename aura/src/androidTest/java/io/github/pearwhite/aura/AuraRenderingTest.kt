@@ -57,14 +57,27 @@ class AuraRenderingTest {
     }
 
     @Test fun blobHaloFadesWithoutShelf() {
+        val style = AuraStyle(coreRadius = 0.5f, edgeSoftness = 0.05f, glowIntensity = 0.2f, glowSpread = 3f)
         setAura {
-            Aura(AuraPalette.of(listOf(Color.Red)), Modifier.fillMaxSize(), animation = AuraAnimation.None)
+            Aura(
+                AuraPalette.of(listOf(Color.Red)), Modifier.fillMaxSize(),
+                style = style, animation = AuraAnimation.None,
+            )
         }
         val px = pixels()
         val y = px.height / 2
         val half = px.width / 2
-        assertTrue(px[half + (0.35f * half).toInt(), y].red > 0.9f)
-        assertTrue(px[half + (0.7f * half).toInt(), y].red < 0.2f)
+        fun redAt(dist: Float) = px[half + (dist * half).toInt(), y].red
+
+        val edgeEnd = style.coreRadius + 2 * style.edgeSoftness
+
+        assertTrue(redAt(style.coreRadius * 0.7f) > 0.9f)
+        assertTrue(redAt(edgeEnd) <= style.glowIntensity + 0.05f)
+
+        val halo = listOf(0f, 0.1f, 0.2f, 0.3f).map { redAt(edgeEnd + it) }
+        halo.zipWithNext().forEach { (a, b) ->
+            assertTrue("halo must not grow: $halo", b <= a + 0.01f)
+        }
     }
 
     @Test fun fillCoversTheWholeArea() {

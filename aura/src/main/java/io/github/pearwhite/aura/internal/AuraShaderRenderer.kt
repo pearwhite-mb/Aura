@@ -13,14 +13,10 @@ import io.github.pearwhite.aura.PaletteFrame
 /**
  * Owns the RuntimeShader and feeds it with uniforms. Android 13+ only.
  * Create once and call [draw] from the draw phase only (not thread-safe).
- *
- * RU: Владеет RuntimeShader и передаёт ему uniform-значения. Только Android 13+.
- * RU: Создаётся один раз; [draw] вызывается только из фазы отрисовки (не потокобезопасен).
  */
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 internal class AuraShaderRenderer {
-    /* Invalid AGSL throws right here, at construction time, not on the first draw.
-     * RU: Некорректный AGSL бросает исключение прямо здесь, при создании, а не при первой отрисовке. */
+    /* Invalid AGSL throws right here, at construction time, not on the first draw.*/
     private val shader = RuntimeShader(AURA_SHADER_SRC)
     private val brush = ShaderBrush(shader)
 
@@ -32,7 +28,7 @@ internal class AuraShaderRenderer {
         seed: Float,
         time: Float,
     ) {
-        /* Never let the size be 0: the shader divides by it. RU: Размер не должен быть 0: шейдер делит на него. */
+        /* Never let the size be 0: the shader divides by it. */
         val w = scope.size.width.coerceAtLeast(1f)
         val h = scope.size.height.coerceAtLeast(1f)
 
@@ -42,9 +38,7 @@ internal class AuraShaderRenderer {
         shader.setIntUniform("colorCount", frame.count)
 
         /* Clamps protect the shader from values it cannot handle: smoothstep needs edge0 < edge1,
-         * and pow() with a non-positive exponent breaks the glow.
-         * RU: Ограничения защищают шейдер от значений, с которыми он не справится: smoothstep
-         * RU: требует edge0 < edge1, а pow() с неположительной степенью ломает свечение. */
+         * and pow() with a non-positive exponent breaks the glow. */
         shader.setFloatUniform("colorBlend", style.colorBlend.coerceAtLeast(0.001f))
         shader.setFloatUniform("edgeSoftness", style.edgeSoftness.coerceAtLeast(0.001f))
         shader.setFloatUniform("glowSpread", style.glowSpread)
@@ -58,8 +52,7 @@ internal class AuraShaderRenderer {
         shader.setFloatUniform("patternScale", style.patternScale)
         shader.setFloatUniform("patternDetail", style.patternDetail)
 
-        /* shapeMode numbers MUST match the shader: 0 = blob, 1 = fill, 2 = rounded rect.
-         * RU: Номера shapeMode ОБЯЗАНЫ совпадать с шейдером: 0 = blob, 1 = fill, 2 = rounded rect. */
+        /* shapeMode numbers MUST match the shader: 0 = blob, 1 = fill, 2 = rounded rect. */
         when (shape) {
             is AuraShape.Blob -> {
                 shader.setIntUniform("shapeMode", 0)
@@ -76,9 +69,7 @@ internal class AuraShaderRenderer {
         }
 
         /* Pattern fit: patternHalf is the half-size of the area in "pattern units" (pixels).
-         * Dividing pixel offsets by it normalizes the pattern to the chosen side(s).
-         * RU: Подгонка узора: patternHalf — полуразмер области в «единицах узора» (пикселях).
-         * RU: Деление смещений в пикселях на него нормирует узор по выбранной стороне (сторонам). */
+         * Dividing pixel offsets by it normalizes the pattern to the chosen side(s). */
         val fit = when (style.patternFit) {
             AuraPatternFit.Auto ->
                 if (shape is AuraShape.Blob) AuraPatternFit.ShorterSide else AuraPatternFit.Stretch

@@ -8,31 +8,26 @@ import kotlin.random.Random
 
 /**
  * Default values and helpers. The defaults reproduce the "orb" look (soft sphere with a halo).
- * RU: Значения по умолчанию и помощники. Дефолты дают вид «шара» (мягкая сфера с ореолом).
  */
 public object AuraDefaults {
-    /** Default style. RU: Стиль по умолчанию. */
+    /** Default style.*/
     public val Style: AuraStyle = AuraStyle()
-    /** Default shape. RU: Форма по умолчанию. */
+    /** Default shape.*/
     public val Shape: AuraShape = AuraShape.Blob()
-    /** Default animation. RU: Анимация по умолчанию. */
+    /** Default animation. */
     public val Animation: AuraAnimation = AuraAnimation.Flow()
-    /** Spec for smooth palette changes. RU: Анимация плавной смены палитры. */
+    /** Spec for smooth palette changes.*/
     public val ColorTransition: AnimationSpec<Float> = tween(durationMillis = 800, easing = FastOutSlowInEasing)
 
     /*
      * Hard limit of colors: the shader uses fixed-size uniform arrays of 8 elements, so this value
      * must match them. It is `const` on purpose: AuraPalette reads it while AuraDefaults is being
      * initialized (see [Palette]); a const is inlined at compile time and avoids an init cycle.
-     * RU: Жёсткий лимит цветов: в шейдере массивы uniform фиксированного размера 8, значение должно
-     * RU: совпадать. Это `const` намеренно: AuraPalette читает его во время инициализации AuraDefaults
-     * RU: (см. [Palette]); константа подставляется при компиляции и не создаёт цикл инициализации.
      */
     public const val MaxColors: Int = 8
 
     /**
      * A ready-made palette in the spirit of the reference design (warm to deep purple).
-     * RU: Готовая палитра в духе референса (от тёплых тонов к глубокому фиолетовому).
      */
     public val Palette: AuraPalette = AuraPalette.weighted(
         Color(0xFFFFA63D) to 0.18f,
@@ -45,8 +40,6 @@ public object AuraDefaults {
     /**
      * Random bright colors with independent hues. Note: value is at least 0.85, so no dark tones.
      * Unrelated hues side by side can blend into muddy mixes.
-     * RU: Случайные яркие цвета с независимыми оттенками. Яркость не ниже 0.85, тёмных тонов не будет.
-     * RU: Далёкие по оттенку соседи могут смешиваться в «грязные» цвета.
      */
     public fun vibrantPalette(count: Int = 4, random: Random = Random.Default): List<Color> =
         List(count.coerceIn(1, MaxColors)) {
@@ -60,8 +53,6 @@ public object AuraDefaults {
     /**
      * Colors laid along an arc of the hue circle that darken towards the end. Neighbours are close
      * in hue, so transitions look clean.
-     * RU: Цвета лежат на дуге круга оттенков и к концу темнеют. Соседи близки по оттенку,
-     * RU: поэтому переходы выглядят чище.
      */
     public fun harmonicPalette(count: Int = 4, random: Random = Random): List<Color> {
         val n = count.coerceIn(1, MaxColors)
@@ -72,8 +63,7 @@ public object AuraDefaults {
         return List(n) { i ->
             val f = if (n == 1) 0f else i / (n - 1f)
             Color.hsv(
-                /* Wrap into [0, 360): the modulo of a negative number is negative in Kotlin.
-                 * RU: Приводим к [0, 360): остаток от деления отрицательного числа в Kotlin отрицательный. */
+                /* Wrap into [0, 360): the modulo of a negative number is negative in Kotlin.*/
                 hue = ((start + direction * arc * f) % 360f + 360f) % 360f,
                 saturation = 0.7f + random.nextFloat() * 0.3f,
                 value = (1f - darkening * f + (random.nextFloat() - 0.5f) * 0.1f).coerceIn(0.5f, 1f),

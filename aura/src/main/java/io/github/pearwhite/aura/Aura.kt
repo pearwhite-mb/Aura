@@ -39,10 +39,6 @@ import kotlin.time.Duration.Companion.milliseconds
  * 0.1, so 20*PI is a whole number of periods for all of them: wrapping time with this value is
  * seamless. If you add a pattern with other multipliers, keep this property or the animation
  * will jump once per period (about 63 seconds).
- * RU: Общий период временных слагаемых шейдера. Все множители времени в шейдере кратны 0.1,
- * RU: поэтому 20*PI содержит целое число периодов у каждого из них: зацикливание бесшовное.
- * RU: Если добавите паттерн с другими множителями, сохраните это свойство, иначе анимация будет
- * RU: скакать раз в период (около 63 секунд).
  */
 private const val TIME_PERIOD = (20 * PI).toFloat()
 
@@ -58,15 +54,6 @@ private const val TIME_PERIOD = (20 * PI).toFloat()
  * @param seed Selects a particular arrangement of spots; the same seed gives the same picture.
  * @param colorTransition Spec for smooth palette changes; null applies changes instantly.
  * @param fallback Content for devices below Android 13. Default: a gradient from the palette.
- *
- * RU: Анимированная «аура» (мягкое цветное пятно, шар или заливка), рисуется AGSL-шейдером.
- * RU: Шейдеру нужен Android 13+; на более старых версиях показывается [fallback] или градиент.
- * RU: palette — цвета и их доли площади (пустая палитра ничего не рисует).
- * RU: modifier — размер и положение; аура рисуется позади содержимого этого узла.
- * RU: style, shape, animation — стиль, контур и движение.
- * RU: seed — выбирает конкретное расположение пятен; одинаковый seed даёт одинаковую картинку.
- * RU: colorTransition — анимация смены палитры; null — менять мгновенно.
- * RU: fallback — содержимое для устройств ниже Android 13; по умолчанию градиент из палитры.
  */
 @Composable
 public fun Aura(
@@ -82,9 +69,7 @@ public fun Aura(
     if (palette.isEmpty) return
 
     /* The API check lives here, not in AuraShader: AuraShader (and the RuntimeShader class) must
-     * never be touched on devices below 33.
-     * RU: Проверка версии API здесь, а не в AuraShader: AuraShader (и класс RuntimeShader) нельзя
-     * RU: трогать на устройствах ниже 33. */
+     * never be touched on devices below 33. */
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         AuraShader(palette, modifier, style, shape, animation, seed, colorTransition)
     } else if (fallback != null) {
@@ -100,18 +85,14 @@ private fun AuraShader(
     palette: AuraPalette, modifier: Modifier, style: AuraStyle, shape: AuraShape,
     animation: AuraAnimation, seed: Float, colorTransition: AnimationSpec<Float>?,
 ) {
-    /* One renderer (and one RuntimeShader, which is expensive to create) per composition.
-     * RU: Один рендерер (и один RuntimeShader, который дорого создавать) на композицию. */
+    /* One renderer (and one RuntimeShader, which is expensive to create) per composition. */
     val renderer = remember { AuraShaderRenderer() }
     val time = rememberAuraTime(animation)
     val frame = rememberPaletteFrame(palette, colorTransition)
 
     /* IMPORTANT: `frame()` and `time.floatValue` are read inside the draw lambda, so state changes
      * invalidate only the draw phase. Reading them in the composable body would recompose on
-     * every animation frame.
-     * RU: ВАЖНО: `frame()` и `time.floatValue` читаются внутри draw-лямбды, поэтому изменения
-     * RU: состояния инвалидируют только фазу отрисовки. Чтение в теле composable вызывало бы
-     * RU: рекомпозицию на каждом кадре анимации. */
+     * every animation frame. */
     Spacer(modifier.drawBehind {
         renderer.draw(
             this,
@@ -125,13 +106,10 @@ private fun AuraShader(
 }
 
 /*
- * Time source for the shader. Returns a state holder that is read only in the draw phase.
- * RU: Источник времени для шейдера. Возвращает состояние, которое читается только в фазе отрисовки.
- */
+ * Time source for the shader. Returns a state holder that is read only in the draw phase.*/
 @Composable
 private fun rememberAuraTime(animation: AuraAnimation): FloatState {
-    /* Hoisted out of the coroutine: after a pause the pattern continues from the same place.
-     * RU: Вынесено за пределы корутины: после паузы узор продолжается с того же места. */
+    /* Hoisted out of the coroutine: after a pause the pattern continues from the same place. */
     val time = remember { mutableFloatStateOf(0f) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val view = LocalView.current
@@ -139,25 +117,18 @@ private fun rememberAuraTime(animation: AuraAnimation): FloatState {
     LaunchedEffect(animation, lifecycle) {
         if (animation !is AuraAnimation.Flow) return@LaunchedEffect
 
-        /* How long to sleep before asking for the next frame (0 = no limit).
-         * RU: Сколько спать перед запросом следующего кадра (0 = без лимита). */
+        /* How long to sleep before asking for the next frame (0 = no limit). */
         val sleepMs = frameSleepMs(animation.maxFps, view.display?.refreshRate ?: 60f)
 
         /* The block is cancelled when the lifecycle drops below STARTED (app in background) and
-         * restarted on return, so no frame callbacks run while nobody can see the aura.
-         * RU: Блок отменяется, когда жизненный цикл опускается ниже STARTED (приложение в фоне),
-         * RU: и запускается заново при возврате: пока ауру никто не видит, колбэки кадров не работают. */
+         * restarted on return, so no frame callbacks run while nobody can see the aura.*/
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             /* Fresh reference point on every start: otherwise the first dt after a pause would be
-             * huge and the animation would jump.
-             * RU: Новая точка отсчёта при каждом запуске: иначе первый dt после паузы огромный,
-             * RU: и анимация скакнёт. */
+             * huge and the animation would jump. */
             var last = withFrameNanos { it }
             while (true) {
                 /* Respect the system "animation scale = off" setting, which hand-written
-                 * frame loops do not honor automatically.
-                 * RU: Уважаем системную настройку «масштаб анимации = выкл.», которую ручные
-                 * RU: циклы по кадрам сами не учитывают. */
+                 * frame loops do not honor automatically.*/
                 if (currentCoroutineContext()[MotionDurationScale]?.scaleFactor == 0f) {
                     delay(500.milliseconds)
                     last = withFrameNanos { it }
@@ -166,16 +137,13 @@ private fun rememberAuraTime(animation: AuraAnimation): FloatState {
 
                 /* Sleeping instead of skipping frames: no frame is requested while we wait, so the
                  * system is free to keep the display at a lower refresh rate. The next vsync
-                 * completes the interval.
-                 * RU: Спим, а не пропускаем кадры: пока ждём, кадры не запрашиваются, и система
-                 * RU: может держать экран на пониженной частоте. Интервал дополняет следующий vsync. */
+                 * completes the interval.*/
                 if (sleepMs > 0L) delay(sleepMs.milliseconds)
 
                 withFrameNanos { now ->
                     val dt = (now - last) / 1_000_000_000f
                     last = now
-                    /* Modulo keeps float precision on long sessions (see TIME_PERIOD).
-                     * RU: Остаток от деления сохраняет точность float на длинных сессиях (см. TIME_PERIOD). */
+                    /* Modulo keeps float precision on long sessions (see TIME_PERIOD).*/
                     time.floatValue = (time.floatValue + dt * animation.speed) % TIME_PERIOD
                 }
             }
@@ -190,11 +158,6 @@ private fun rememberAuraTime(animation: AuraAnimation): FloatState {
 * We wake in the middle between two vsyncs ((k - 0.5) periods): the next vsync then completes exactly
 * k periods, and timer jitter of up to half a period in either direction does not change the result.
 * The tiny subtraction protects from float noise: displays report 120.0 as 119.99998 or 60.000004.
-* RU: Сон перед запросом следующего кадра. Лимит выражаем в кадрах экрана: одно обновление на k кадров,
-* RU: k округляется ВВЕРХ, чтобы лимит не превышался (50 fps на 120 Гц станет 40, а не 60).
-* RU: Просыпаемся посередине между двумя vsync ((k - 0.5) периода): следующий vsync дополняет интервал
-* RU: ровно до k периодов, и дрожание таймера до полпериода в любую сторону результат не меняет.
-* RU: Малое вычитание защищает от шума float: экраны отдают 120.0 как 119.99998, а 60.0 как 60.000004.
 */
 private fun frameSleepMs(maxFps: Int?, refreshHz: Float): Long {
     if (maxFps == null || maxFps <= 0) return 0L
@@ -206,7 +169,6 @@ private fun frameSleepMs(maxFps: Int?, refreshHz: Float): Long {
 
 /*
  * Holds the "from" and "to" palettes of a running transition.
- * RU: Хранит палитры «из» и «в» текущего перехода.
  */
 private class PaletteTransition(initial: AuraPalette) {
     var from = initial
@@ -215,7 +177,6 @@ private class PaletteTransition(initial: AuraPalette) {
 
 /*
  * Animates between palettes and exposes the current blend as a reusable frame.
- * RU: Анимирует переход между палитрами и отдаёт текущую смесь как переиспользуемый кадр.
  */
 @Composable
 private fun rememberPaletteFrame(
@@ -228,19 +189,14 @@ private fun rememberPaletteFrame(
 
     /* `spec` is read through rememberUpdatedState and is NOT an effect key. If it were a key,
      * changing it mid-animation would cancel the effect, and the early return below would then
-     * freeze the animation halfway.
-     * RU: `spec` читается через rememberUpdatedState и НЕ является ключом эффекта. Будь он ключом,
-     * RU: смена посреди анимации отменила бы эффект, а ранний return ниже заморозил бы анимацию
-     * RU: на полпути. */
+     * freeze the animation halfway. */
     val currentSpec by rememberUpdatedState(spec)
 
     LaunchedEffect(target) {
         if (target == transition.to) return@LaunchedEffect
 
         /* If a new palette arrives mid-transition, start from what is visible right now
-         * (a snapshot), so there is no visual jump.
-         * RU: Если новая палитра пришла посреди перехода, стартуем с того, что видно сейчас
-         * RU: (снимок), поэтому визуального скачка нет. */
+         * (a snapshot), so there is no visual jump. */
         transition.from = blend(transition.from, transition.to, progress.value)
         transition.to = target
 
@@ -253,8 +209,7 @@ private fun rememberPaletteFrame(
         }
     }
 
-    /* Returned as a function so the caller reads `progress.value` in the draw phase.
-     * RU: Возвращается функцией, чтобы вызывающий читал `progress.value` в фазе отрисовки. */
+    /* Returned as a function so the caller reads `progress.value` in the draw phase.*/
     return {
         blendInto(transition.from, transition.to, progress.value, frame)
         frame
@@ -264,12 +219,9 @@ private fun rememberPaletteFrame(
 /*
  * Fallback for Android below 13: a gradient made of the palette, with the same shares.
  * `filled = false` (Blob) fades to transparent like a sphere; `filled = true` covers the whole area.
- * RU: Запасной вариант для Android ниже 13: градиент из палитры с теми же долями.
- * RU: `filled = false` (Blob) растворяется в прозрачность как шар; `filled = true` покрывает всю область.
  */
 private fun AuraPalette.toFallbackBrush(filled: Boolean): Brush {
-    /* A gradient needs at least two stops, so a single color is a plain fill.
-     * RU: Градиенту нужно минимум две точки, поэтому один цвет — это обычная заливка. */
+    /* A gradient needs at least two stops, so a single color is a plain fill.*/
     if (filled && colors.size == 1) return SolidColor(colors[0])
     var acc = 0f
     val stops = buildList {

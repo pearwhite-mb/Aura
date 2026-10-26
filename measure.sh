@@ -6,7 +6,7 @@ MINUTES="${2:-10}"
 SAMPLE="${3:-30}"
 PKG="io.github.pearwhite.aura.sample"
 
-# Reads one field of `dumpsys battery`. RU: Читает одно поле из `dumpsys battery`.
+# Reads one field of `dumpsys battery`.
 field() { adb shell dumpsys battery | tr -d '\r' | grep -i "^ *$1:" | head -1 | sed 's/.*: *//'; }
 
 adb shell am force-stop "$PKG"

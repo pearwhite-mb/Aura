@@ -54,7 +54,7 @@ private enum class ShapeKind(val title: String) {
 }
 
 private enum class AreaKind(val title: String) {
-    Square("1:1"), Wide("Широкая"), Tall("Высокая")
+    Square("1:1"), Wide("Wide"), Tall("Tall")
 }
 
 private data class AuraEntry(val color: Color, val weight: Float)
@@ -130,7 +130,6 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
         if (speed == 0f) AuraAnimation.None else AuraAnimation.Flow(speed, maxFps)
 
     Column(modifier.fillMaxSize()) {
-        // Аура закреплена сверху, чтобы видеть её во время движения слайдеров
         Box(
             Modifier
                 .fillMaxWidth()
@@ -162,7 +161,7 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            SectionTitle("Область и форма")
+            SectionTitle("Area and shape")
             ChipRow(AreaKind.entries, area, { it.title }) { area = it }
             ChipRow(ShapeKind.entries, kind, { it.title }) { kind = it }
             when (kind) {
@@ -178,13 +177,19 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
 
             SectionTitle("AuraStyle")
             Text(
-                "glow* работают только в Blob, edgeSoftness — в Blob и RoundedRect",
+                "glow* parameters only apply to Blob; edgeSoftness applies to Blob and RoundedRect",
                 style = MaterialTheme.typography.bodySmall,
             )
             StyleParams.forEach { p ->
                 ParamSlider(p.name, p.get(style), p.range) { style = p.set(style, it) }
             }
-            TextButton(onClick = { style = AuraDefaults.Style }) { Text("Сбросить стиль") }
+
+            TextButton(
+                onClick = { style = AuraDefaults.Style }
+            ) {
+                Text("Reset style")
+            }
+
             SelectionContainer {
                 Text(
                     style.toCode(),
@@ -195,23 +200,27 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
 
             ParamSlider("seed", seed, 0f..100f) { seed = it }
 
-            SectionTitle("Анимация")
-            ParamSlider("Скорость (0 = без анимации)", speed, 0f..3f) { speed = it }
+            SectionTitle("Animation")
+            ParamSlider("Speed (0 = no animation)", speed, 0f..3f) { speed = it }
 
             ChipRow(AuraPatternFit.entries, style.patternFit, { it.name }) {
                 style = style.copy(patternFit = it)
             }
 
-            Text("Лимит FPS", style = MaterialTheme.typography.bodyMedium)
-            ChipRow(listOf(null, 60, 30, 15), maxFps, { it?.toString() ?: "без лимита" }) { maxFps = it }
+            Text("FPS limit", style = MaterialTheme.typography.bodyMedium)
+            ChipRow(listOf(null, 60, 30, 15), maxFps, { it?.toString() ?: "Unlimited" }) {
+                maxFps = it
+            }
 
-            SectionTitle("Палитра (веса)")
+            SectionTitle("Palette (weights)")
             entries.forEachIndexed { i, e ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier
-                        .size(20.dp)
-                        .clip(CircleShape)
-                        .background(color = e.color))
+                    Box(
+                        Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(color = e.color)
+                    )
                     Slider(
                         value = e.weight,
                         onValueChange = { w ->
@@ -229,17 +238,17 @@ fun AuraPlayground(modifier: Modifier = Modifier) {
                     onClick = {
                         entries = entries + AuraEntry(AuraDefaults.vibrantPalette(1).first(), 0.5f)
                     },
-                ) { Text("+ цвет") }
+                ) { Text("+ Color") }
                 OutlinedButton(
                     enabled = entries.size > 1,
                     onClick = { entries = entries.dropLast(1) },
-                ) { Text("− цвет") }
+                ) { Text("− Color") }
                 OutlinedButton(
                     onClick = {
                         entries =
                             entries.map { it.copy(color = AuraDefaults.vibrantPalette(1).first()) }
                     },
-                ) { Text("Новые цвета") }
+                ) { Text("New colors") }
             }
             Spacer(Modifier.height(32.dp))
         }

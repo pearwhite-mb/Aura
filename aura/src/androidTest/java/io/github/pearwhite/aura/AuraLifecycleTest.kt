@@ -49,17 +49,17 @@ class AuraLifecycleTest {
         rule.mainClock.advanceTimeBy(500)
         val running1 = frame()
         rule.mainClock.advanceTimeBy(500)
-        assertFalse("анимация должна идти", running1.contentEquals(frame()))
+        assertFalse("animation should be running", running1.contentEquals(frame()))
 
         rule.runOnUiThread { owner.currentState = Lifecycle.State.CREATED }
         rule.mainClock.advanceTimeBy(100)
         val paused1 = frame()
         rule.mainClock.advanceTimeBy(1000)
         val paused2 = frame()
-        assertTrue("на паузе кадр не меняется", paused1.contentEquals(paused2))
+        assertTrue("frame should remain unchanged while paused", paused1.contentEquals(paused2))
 
         rule.runOnUiThread { owner.currentState = Lifecycle.State.RESUMED }
         rule.mainClock.advanceTimeBy(1000)
-        assertFalse("после возврата анимация продолжается", paused2.contentEquals(frame()))
+        assertFalse("animation should resume after returning", paused2.contentEquals(frame()))
     }
 }
