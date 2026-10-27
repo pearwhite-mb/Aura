@@ -65,7 +65,7 @@ aura = { group = "io.github.pearwhite-mb", name = "aura", version = "0.1.0" }
 implementation(libs.aura)
 ```
 
-Make sure `mavenCentral()` is among your repositories (it is by default in new projects). All public API lives in the `io.github.pearwhite.aura` package.
+Make sure `mavenCentral()` is among your repositories (it is by default in new projects). All public API lives in the `io.github.pearwhitemb.aura` package.
 
 ## Quick start
 

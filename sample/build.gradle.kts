@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "io.github.pearwhite.aura.sample"
+    namespace = "io.github.pearwhitemb.aura.sample"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "io.github.pearwhite.aura.sample"
+        applicationId = "io.github.pearwhitemb.aura.sample"
         minSdk = 26
         targetSdk = 37
         versionCode = 1

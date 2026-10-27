@@ -38,7 +38,7 @@ mavenPublishing {
 }
 
 android {
-    namespace = "io.github.pearwhite.aura"
+    namespace = "io.github.pearwhitemb.aura"
     compileSdk {
         version = release(37)
     }
@@ -74,6 +74,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.runner)
+    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.lifecycle.runtime.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
