@@ -21,15 +21,7 @@ Soft, animated "aura" for Jetpack Compose: a glowing sphere, a rounded card or a
   <em>Blob · Random Blob · Rounded Rectangle · Fill</em>
 </p>
 
-[Features](#features)
-[Installation](#installation)
-[Quick start](#quick-start)
-[Palettes](#palettes-and-color-shares)
-[Shapes](#shapes)
-[Animation](#animation)
-[Style](#style-reference)
-[Performance](#performance)
-[Limitations](#limitations)
+[Features](#features) · [Installation](#installation) · [Quick start](#quick-start) · [Palettes](#palettes-and-color-shares) · [Shapes](#shapes) · [Animation](#animation) · [Style](#style-reference) · [Performance](#performance) · [Limitations](#limitations)
 
 ## Features
 
