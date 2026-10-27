@@ -1,6 +1,40 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.vanniktech.maven.publish)
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+
+    coordinates("io.github.pearwhite-mb", "aura", "0.1.0")
+
+    pom {
+        name.set("Aura")
+        description.set("Animated AGSL aura for Jetpack Compose: soft glowing spheres, cards and full-screen backgrounds with weighted color palettes.")
+        inceptionYear.set("2026")
+        url.set("https://github.com/pearwhite-mb/aura/")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("pearwhite")
+                name.set("Anatoliy Lyashenko")
+                url.set("https://github.com/pearwhite-mb/")
+            }
+        }
+        scm {
+            url.set("https://github.com/pearwhite-mb/aura/")
+            connection.set("scm:git:git://github.com/pearwhite-mb/aura.git")
+            developerConnection.set("scm:git:ssh://git@github.com/pearwhite-mb/Aura.git")
+        }
+    }
 }
 
 android {

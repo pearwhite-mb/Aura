@@ -54,6 +54,7 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 
 kotlinx-binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.18.2" }
 baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidxMacroBenchmark"}
+vanniktech-maven-publish = { id = "com.vanniktech.maven.publish", version = "0.37.0" }
 android-test = { id = "com.android.test", version.ref = "agp" }
 
 

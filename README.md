@@ -2,7 +2,13 @@
 
 Soft, animated "aura" for Jetpack Compose: a glowing sphere, a rounded card or a full-screen background, drawn by a single AGSL shader. You pass colors (optionally with shares of the area), pick a shape, and the library does the rest.
 
-Demo
+![Min SDK](https://img.shields.io/badge/minSdk-26-brightgreen)
+![Shader](https://img.shields.io/badge/shader-Android%2013%2B-blue)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue)
+<!-- After the first release, uncomment: -->
+<!-- [![Maven Central](https://img.shields.io/maven-central/v/io.github.pearwhite-mb/aura)](https://central.sonatype.com/artifact/io.github.pearwhite-mb/aura) -->
+
+## Demo
 
 <p align="center">
   <img src="docs/demo/demo_preview_1.gif" width="24%" alt="Blob animation" />
@@ -15,22 +21,7 @@ Demo
   <em>Blob · Random Blob · Rounded Rectangle · Fill</em>
 </p>
 
-Playground Screenshots
-
-<p align="center">
-  <img src="docs/images/screenshot_1.png" width="48%" alt="Playground screenshot 1" />
-  <img src="docs/images/screenshot_2.png" width="48%" alt="Playground screenshot 2" />
-</p>
-
-Random Palette Examples
-
-<p align="center">
-  <img src="docs/images/random_palettes.png" width="80%" alt="Random color palette examples" />
-</p>
-
-![Min SDK](https://img.shields.io/badge/minSdk-26-brightgreen)
-![Shader](https://img.shields.io/badge/shader-Android%2013%2B-blue)
-<!-- TODO: add the Maven Central and License badges after the first release -->
+[Features](#features) · [Installation](#installation) · [Quick start](#quick-start) · [Palettes](#palettes-and-color-shares) · [Shapes](#shapes) · [Animation](#animation) · [Style](#style-reference) · [Performance](#performance) · [Limitations](#limitations)
 
 ## Features
 
@@ -38,9 +29,9 @@ Random Palette Examples
 - **Three shapes**: a sphere with a soft halo (`Blob`), a rounded rectangle with feathered edges (`RoundedRect`), and a fill for the whole area (`Fill`). Any other Compose shape works through `Modifier.clip`.
 - **Spherical look**: the pattern wraps around the sphere, and the halo takes the color of the nearest edge.
 - **Smooth palette changes**: new colors and new shares fade in; an interrupted transition continues from what is on screen.
-- **Careful with resources**: no recompositions during animation (state is read in the draw phase), no allocations per frame, animation pauses when the screen is not visible, an optional frame rate limit, and the system "animation scale = off" setting is respected.
+- **Careful with resources**: no recompositions during animation (state is read in the draw phase), the per-frame work is designed to avoid allocations, the animation pauses when the screen is not visible, there is an optional frame rate limit, and the system "animation scale = off" setting is respected.
 - **Graceful fallback** on Android 8-12: a gradient built from the same palette, or your own composable.
-- **Deterministic**: the same `seed` always gives the same picture.
+- **Deterministic**: the same `seed` always gives the same arrangement of spots.
 
 ## Requirements
 
@@ -53,16 +44,28 @@ Random Palette Examples
 
 ## Installation
 
-<!-- TODO: replace the coordinates with the real ones after the first publication -->
+The library is published on Maven Central.
 
 ```kotlin
 // build.gradle.kts of your module
 dependencies {
-    implementation("io.github.pearwhite:aura:<version>")
+    implementation("io.github.pearwhite-mb:aura:0.1.0")
 }
 ```
 
-Make sure `mavenCentral()` is among your repositories (it is by default in new projects).
+Or with a version catalog:
+
+```toml
+# gradle/libs.versions.toml
+[libraries]
+aura = { group = "io.github.pearwhite-mb", name = "aura", version = "0.1.0" }
+```
+
+```kotlin
+implementation(libs.aura)
+```
+
+Make sure `mavenCentral()` is among your repositories (it is by default in new projects). All public API lives in the `io.github.pearwhite.aura` package.
 
 ## Quick start
 
@@ -105,6 +108,14 @@ AuraDefaults.harmonicPalette(count = 4)   // colors along an arc of hues, darken
 ```
 
 `vibrantPalette` never produces dark tones (brightness is at least 0.85). `harmonicPalette` usually blends more cleanly. Both accept a `Random`, so results can be reproduced.
+
+<p align="center">
+  <img src="docs/images/random_palettes.png" width="80%" alt="Random color palettes: vibrantPalette on the top row, harmonicPalette on the bottom row" />
+</p>
+
+<p align="center">
+  <em>Top row: <code>vibrantPalette</code>. Bottom row: <code>harmonicPalette</code>. Random weights.</em>
+</p>
 
 ### Driving the aura with data
 
@@ -177,7 +188,7 @@ Aura(palette, animation = AuraAnimation.None, seed = 4.1f)                // sta
 `AuraStyle` holds the visual parameters. Distances are in units of half of the shorter side (1.0 reaches the edge of the area). Change only what you need:
 
 ```kotlin
-Aura(palette, style = AuraDefaults.Style.copy(patternScale = 4f, colorBlend = 0.1f))
+Aura(palette, style = AuraDefaults.Style.copy(patternScale = 6f, colorBlend = 0.1f))
 ```
 
 | Parameter | Default | What it does | Applies to |
@@ -196,7 +207,7 @@ Aura(palette, style = AuraDefaults.Style.copy(patternScale = 4f, colorBlend = 0.
 Notes:
 
 - The pattern size is relative to the object, not to pixels: `patternScale` means "spots per object" whatever the size of the area or `coreRadius`.
-- With `colorBlend = 0.25`, a color whose share is smaller than about `2 * colorBlend` never reaches its pure value and shows up as a soft accent. Lower `colorBlend` for crisper boundaries.
+- A color whose share is smaller than about `2 * colorBlend` (0.4 with the default `colorBlend = 0.2`) never reaches its pure value and shows up as a softer accent. Lower `colorBlend` for crisper boundaries.
 - `patternFit = Auto` stretches the pattern over `Fill` and `RoundedRect` areas (no repeats on tall or wide areas) and is ignored by `Blob`, which always uses its own round coordinates.
 
 The sample app has sliders for every parameter and prints the current values as code, so you can tune a look and copy it.
@@ -210,7 +221,7 @@ The sample app has sliders for every parameter and prints the current values as 
 
 ## Performance
 
-Measured with Macrobenchmark on one device, a Poco F3 at 120 Hz, a full-screen aura animating for 10 seconds, 3 runs. `frameOverrunMs` is negative when a frame finishes before its deadline (at 120 Hz the frame budget is about 8.3 ms).
+Measured with Macrobenchmark on one device, a Poco F3 at 120 Hz, an aura animating for 10 seconds, 3 runs. `frameOverrunMs` is negative when a frame finishes before its deadline (at 120 Hz the frame budget is about 8.3 ms).
 
 | Scenario | `frameOverrunMs` median | `frameOverrunMs` worst P99 | CPU per frame |
 |---|---|---|---|
@@ -220,7 +231,7 @@ Measured with Macrobenchmark on one device, a Poco F3 at 120 Hz, a full-screen a
 | `Fill`, palette changing every second | -6.0 | -2.5 | ~1.6 ms |
 | `Fill`, 8 colors, high pattern frequency | -4.8 | -1.1 | ~1.6 ms |
 
-No frames were missed in any scenario on this device. The cost grows with the painted area and with the number of colors and the pattern frequency, and almost all of it is GPU time. A weaker GPU will have less headroom, so test on the weakest device you support.
+No frames were missed in any scenario on this device. The cost grows with the painted area and with the number of colors and the pattern frequency, and almost all of it is GPU time. A weaker GPU will have less headroom, so test on the weakest device you support. The numbers were taken before the final default style values were chosen; style values such as `coreRadius` or `patternScale` do not change how much work the shader does per pixel.
 
 ### Frame rate limit
 
@@ -246,7 +257,7 @@ rule.mainClock.advanceTimeBy(500)
 
 ## Limitations
 
-- **Shares are statistical.** On average over many seeds the shares of area match the weights well (within about 5 percentage points in our simulations), but a single picture can deviate a lot: with few large spots one color may take most of the sphere. If every picture must be accurate, this library is not the right tool; raising `patternScale` gives more spots and a closer match, but it is not a guarantee.
+- **Shares are statistical.** In a numerical model of the shader with the default style, the shares averaged over many pictures match the weights within about 3 percentage points. A single picture is less accurate: a color typically deviates by 7-10 points from its weight, and in roughly one picture out of ten some color is off by more than 20 points (with few large spots, one color can take most of the sphere). Raising `patternScale` puts more spots into the picture and helps: for a sphere with weights 50/30/20 the typical deviation went from about 18 points at `patternScale = 2.4` to about 10 at 4, 7 at 6 and 5 at 8. If every picture must be accurate, this library is not the right tool.
 - **At most 8 colors.** Extra colors are ignored.
 - **Transitions match colors by index.** Reordering colors between updates makes them morph into each other; keep a stable order.
 - **`depth` is designed for a circle** (`Blob` with `exponent = 2`) and is ignored for other shapes.
@@ -271,19 +282,23 @@ The time loop runs only while the screen is visible and is wrapped on a period t
 - `./gradlew :aura:connectedDebugAndroidTest` runs the on-device tests (shader compilation, shapes, color shares, palette transitions, lifecycle pause). Use a device or emulator with Android 13+ for the shader tests.
 - `:benchmarks` contains the Macrobenchmark scenarios behind the numbers above. Run them on a real device, not an emulator.
 
+<p align="center">
+  <img src="docs/images/screenshot_1.png" width="48%" alt="Playground screenshot 1" />
+  <img src="docs/images/screenshot_2.png" width="48%" alt="Playground screenshot 2" />
+</p>
+
+<p align="center">
+  <em>The sample app's Playground</em>
+</p>
+
 ## Status and versioning
 
-The library is in `0.x`: the public API may change between minor versions, and every change will be listed in the changelog. Adding a parameter to a public composable or a data class is not binary-compatible, so a stable `1.0` will be preceded by a review of the public API. Adding a variant to a `sealed` type or an `enum` can break exhaustive `when` expressions in your code, and will be noted in the changelog too.
-
-<!-- TODO: add CHANGELOG.md and link it here -->
+The library is in `0.x`: the public API may change between minor versions, and every change will be listed in the [changelog](CHANGELOG.md). Adding a parameter to a public composable or a data class is not binary-compatible, so a stable `1.0` will be preceded by a review of the public API. Adding a variant to a `sealed` type or an `enum` can break exhaustive `when` expressions in your code, and will be noted in the changelog too.
 
 ## Contributing
 
 Issues and pull requests are welcome. Before opening a pull request, run the unit tests and, if you touched the shader, the on-device tests on an Android 13+ device. If you change how colors are placed or the equalization constant in the shader, re-check the share tests.
 
-<!-- TODO: add CONTRIBUTING.md if you want a longer guide -->
-
 ## License
 
-<!-- TODO: choose a license and add a LICENSE file. Apache-2.0 is the usual choice for Android libraries. -->
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
