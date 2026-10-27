@@ -113,10 +113,6 @@ AuraDefaults.harmonicPalette(count = 4)   // colors along an arc of hues, darken
   <img src="docs/images/random_palettes.png" width="80%" alt="Random color palettes: vibrantPalette on the top row, harmonicPalette on the bottom row" />
 </p>
 
-<p align="center">
-  <em>Top row: <code>vibrantPalette</code>. Bottom row: <code>harmonicPalette</code>. Random weights.</em>
-</p>
-
 ### Driving the aura with data
 
 ```kotlin
