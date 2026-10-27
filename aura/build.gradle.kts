@@ -27,19 +27,19 @@ kotlin {
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
     api(libs.androidx.compose.ui)
     api(libs.androidx.compose.runtime)
     api(libs.androidx.compose.animation.core)
-    implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.lifecycle.runtime.compose)
-    implementation(libs.androidx.runner)
+    api(libs.androidx.compose.foundation)
 
     testImplementation(libs.junit)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.runner)
     androidTestImplementation(libs.androidx.lifecycle.runtime.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    androidTestImplementation(libs.androidx.espresso.core)
 }
