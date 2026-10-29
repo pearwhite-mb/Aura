@@ -5,8 +5,7 @@ Soft, animated "aura" for Jetpack Compose: a glowing sphere, a rounded card or a
 ![Min SDK](https://img.shields.io/badge/minSdk-26-brightgreen)
 ![Shader](https://img.shields.io/badge/shader-Android%2013%2B-blue)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
-<!-- After the first release, uncomment: -->
-<!-- [![Maven Central](https://img.shields.io/maven-central/v/io.github.pearwhite-mb/aura)](https://central.sonatype.com/artifact/io.github.pearwhite-mb/aura) -->
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.pearwhite-mb/aura)](https://central.sonatype.com/artifact/io.github.pearwhite-mb/aura)
 
 ## Demo
 
