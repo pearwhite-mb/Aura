@@ -14,7 +14,7 @@ mavenPublishing {
         name.set("Aura")
         description.set("Animated AGSL aura for Jetpack Compose: soft glowing spheres, cards and full-screen backgrounds with weighted color palettes.")
         inceptionYear.set("2026")
-        url.set("https://github.com/pearwhite-mb/aura/")
+        url.set("https://github.com/pearwhite-mb/Aura/")
         licenses {
             license {
                 name.set("The Apache License, Version 2.0")
@@ -30,8 +30,8 @@ mavenPublishing {
             }
         }
         scm {
-            url.set("https://github.com/pearwhite-mb/aura/")
-            connection.set("scm:git:git://github.com/pearwhite-mb/aura.git")
+            url.set("https://github.com/pearwhite-mb/Aura/")
+            connection.set("scm:git:git://github.com/pearwhite-mb/Aura.git")
             developerConnection.set("scm:git:ssh://git@github.com/pearwhite-mb/Aura.git")
         }
     }
